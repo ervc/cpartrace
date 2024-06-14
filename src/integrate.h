@@ -506,10 +506,6 @@ void rkstep_particle(Particle *particle, double dt) {
         result[0] += Rx*randkick;
         result[1] += Ry*randkick;
         result[2] += Rz*randkick;
-        FILE *file;
-        file = fopen("RZ_results.txt","a");
-        fprintf(file,"%f\n",Rz);
-        fclose(file);
     }
     update_Particle(particle, result);
 }

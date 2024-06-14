@@ -27,7 +27,7 @@ int main() {
     double y0 = 5.0 * AU;
     double z0 = -0.05 * AU;
     double size0 = 1.0;
-    int np = 101;
+    int np = 1;
     double sizes[np];
     double xs[np];
     double ys[np];
