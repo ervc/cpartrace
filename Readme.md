@@ -15,6 +15,9 @@ Main module in `partrace.c` and `partrace.h`, functions are kept in `src/` file.
   - [ ] Put the planet mass, location, and sun location in the model
   - [ ] read in particles from a file
 
+- [ ] Make saving particle output optional
+  - [ ] Maybe make it so if fname=="" then don't save?
+
 - [ ] Grid stats while running
   - [ ] Residence times
   - [ ] velocities
