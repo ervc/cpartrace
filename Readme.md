@@ -10,10 +10,14 @@ Main module in `partrace.c` and `partrace.h`, functions are kept in `src/` file.
 
 ## TODO:
 
-
 - [ ] Input files and reading in information
   - [ ] Put alpha, aspect ratio, flaring angle, omegaframe, mplan in the Model struct
   - [ ] read in particles from a file
+
+- [ ] Grid stats while running
+  - [ ] Residence times
+  - [ ] velocities
+    - [ ] put these in hdf5?
 
 - [ ] Time dependence?
   - [ ] Make meshfields nt,nz,ny,nx?
