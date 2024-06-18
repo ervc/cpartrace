@@ -7,11 +7,6 @@
 
 //TODO: put these into model struct?
 
-// disk values
-// #define ALPHA    ( 1.0e-3 )   // alpha viscosity
-// #define ASPECT     0.05       // aspect ratio
-// #define FLARING    0.25       // flaring angle
-
 // Planet position
 #define PLANETMASS ( 0.0 * MEARTH )
 #define PLANX    ( R0 )
@@ -121,7 +116,7 @@ Model *init_Model(char* fargodir, int nout, size_t nx, size_t ny, size_t nz) {
     model->flaring = get_value(var,"FLARINGINDEX");
     model->planetmass = get_value(var,"PLANETMASS") * MSUN;
     model->omegaframe = get_value(var,"OMEGAFRAME") * 1/TIME;
-
+    free_Variables(var);
 
     return model;
 }
