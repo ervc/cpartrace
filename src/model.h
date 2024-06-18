@@ -32,6 +32,11 @@ typedef struct Model {
     size_t ny;
     size_t nz;
 
+    double alpha;
+    double aspect;
+    double flaring;
+    double planetmass;
+
     // data
     MeshField *gasdens;
     MeshField *gasvphi;

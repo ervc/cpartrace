@@ -6,6 +6,8 @@
 #define MAX_VAR_SIZE 100
 // maixmum number of characters in the dictionary
 #define MAX_KEY_SIZE  100
+// number of keys we want to read
+#define NKEYS 5
 
 /**
  * @brief Dictionary object to store variables from the fargo model.
@@ -27,8 +29,8 @@ typedef struct Variables {
 Variables *init_Variables() {
     Variables *var = malloc(sizeof(*var));
     var->size = 0;
-    var->keys = calloc(MAX_VAR_SIZE*MAX_KEY_SIZE,sizeof(char));
-    var->values = malloc(sizeof(double) * MAX_KEY_SIZE);
+    var->keys = malloc(sizeof(char*) * MAX_VAR_SIZE);
+    var->values = malloc(sizeof(double*) * MAX_VAR_SIZE);
     return var;
 }
 
@@ -56,7 +58,8 @@ int add_variable(Variables *var, char* key, double value) {
         perror("Variables dictionary is full!");
         exit(1);
     }
-    var->keys[var->size] = key;
+    var->keys[var->size] = malloc(sizeof(char)*MAX_KEY_SIZE);
+    strcpy(var->keys[var->size], key);
     var->values[var->size] = value;
     var->size++;
     return 0;
@@ -109,4 +112,45 @@ void print_variables(Variables *var) {
         }
     }
     printf("\n]\n");
+}
+
+Variables *init_Variables_fromFile(char *fname) {
+    Variables *var = init_Variables();
+    FILE *file;
+    file = fopen(fname, "r");
+    if (file == NULL) {
+        perror("Cannot open variables file");
+        exit(1);
+    }
+    // list of keys that we want to find
+    char *key_search[NKEYS] = {
+        "ALPHA", "ASPECTRATIO", "FLARINGINDEX", "PLANETMASS", "OMEGAFRAME"
+    };
+    char* line = NULL;
+    size_t len=0;
+    ssize_t read=0;
+    while ((read = getline(&line, &len, file)) != -1) {
+        // printf("Read line : %s",line);
+        char *split_str;
+        split_str = strtok(line, " \t\n");
+        char *key;
+        char *val_s;
+        size_t idx = 0;
+        while (split_str != NULL) {
+            if (idx == 0) {
+                key = split_str;
+            } else if (idx == 1) {
+                val_s = split_str;
+            }
+            idx++;
+            split_str = strtok(NULL," \t\n");
+        }
+        for (int i=0; i<NKEYS; i++) {
+            if (strcmp(key,key_search[i])==0) {
+                add_variable(var,key,atof(val_s));
+            }
+        }
+    }
+
+    return var;
 }
