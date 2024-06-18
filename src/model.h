@@ -8,9 +8,9 @@
 //TODO: put these into model struct?
 
 // disk values
-#define ALPHA    ( 1.0e-3 )   // alpha viscosity
-#define ASPECT     0.05       // aspect ratio
-#define FLARING    0.25       // flaring angle
+// #define ALPHA    ( 1.0e-3 )   // alpha viscosity
+// #define ASPECT     0.05       // aspect ratio
+// #define FLARING    0.25       // flaring angle
 
 // Planet position
 #define PLANETMASS ( 0.0 * MEARTH )
@@ -36,6 +36,7 @@ typedef struct Model {
     double aspect;
     double flaring;
     double planetmass;
+    double omegaframe;
 
     // data
     MeshField *gasdens;
@@ -84,11 +85,13 @@ Model *init_Model(char* fargodir, int nout, size_t nx, size_t ny, size_t nz) {
     char vphifile[100];
     char vrfile[100];
     char vthetafile[100];
+    char varfile[100];
     int cx;
     cx = snprintf(rhofile,100,"%s/gasdens%d.dat",fargodir,nout);
     cx = snprintf(vphifile,100,"%s/gasvx%d.dat",fargodir,nout);
     cx = snprintf(vrfile,100,"%s/gasvy%d.dat",fargodir,nout);
     cx = snprintf(vthetafile,100,"%s/gasvz%d.dat",fargodir,nout);
+    cx = snprintf(varfile,100,"%s/variables.par",fargodir);
     if (cx>100) {
         perror("Fargodir is too long!");
         exit(1);
@@ -109,6 +112,16 @@ Model *init_Model(char* fargodir, int nout, size_t nx, size_t ny, size_t nz) {
     // make the density gradients in cartesian
     printf("Getting Gradrho...\n");
     init_gradrho(model);
+
+    printf("Getting variables...\n");
+    Variables *var = init_Variables_fromFile(varfile);
+    // read the variables and rescale where necessary
+    model->alpha = get_value(var,"ALPHA");
+    model->aspect = get_value(var,"ASPECTRATIO");
+    model->flaring = get_value(var,"FLARINGINDEX");
+    model->planetmass = get_value(var,"PLANETMASS") * MSUN;
+    model->omegaframe = get_value(var,"OMEGAFRAME") * 1/TIME;
+
 
     return model;
 }
@@ -242,6 +255,8 @@ double get_Omega(double r) {
 }
 
 double get_scaleheight(double r) {
+    double ASPECT = 0.05;
+    double FLARING = 0.25;
     return r*ASPECT*pow(r/R0,FLARING);
 }
 

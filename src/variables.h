@@ -1,5 +1,5 @@
-#include <stdlib.h>
-#include <stdio.h>
+// #include <stdlib.h>
+// #include <stdio.h>
 #include <string.h>
 
 // Maximum number of items that can be saved in the dictionary

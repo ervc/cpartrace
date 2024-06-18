@@ -11,7 +11,8 @@ Main module in `partrace.c` and `partrace.h`, functions are kept in `src/` file.
 ## TODO:
 
 - [ ] Input files and reading in information
-  - [ ] Put alpha, aspect ratio, flaring angle, omegaframe, mplan in the Model struct
+  - [x] Put alpha, aspect ratio, flaring angle, omegaframe, in the Model struct
+  - [ ] Put the planet mass, location, and sun location in the model
   - [ ] read in particles from a file
 
 - [ ] Grid stats while running

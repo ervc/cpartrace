@@ -100,8 +100,11 @@ void get_vrho(Particle *particle, double Y[6], double vrho[3]) {
     }
 
     // scalars
+    double ASPECT = model->aspect;
+    double FLARING = model->flaring;
     double H = r*ASPECT*pow(r/R0,FLARING);
     double OM = sqrt(G*MSUN/r3);
+    double ALPHA = model->alpha;
     double gasdiff = ALPHA*H*H*OM;
     double St = particle->size*particle->density/H/rho_g;
     double invSt2 = 1/(1+St*St);
@@ -184,8 +187,11 @@ void get_vdiff(Particle *particle, double Y[6], double vdiff[3]) {
     
 
     // scalars
+    double ASPECT = model->aspect;
+    double FLARING = model->flaring;
     double H = r*ASPECT*pow(r/R0,FLARING);
     double OM = sqrt(G*MSUN/r3);
+    double ALPHA = model->alpha;
     double gasdiff = ALPHA*H*H*OM;
     double St = particle->size*particle->density/H/rho_g;
     double invSt2 = 1.0/(1.0+St*St);
@@ -305,8 +311,11 @@ void dYdt(Particle *particle, double Y[6], double derivative[6]) {
     
 
     // scalars
+    double ASPECT = model->aspect;
+    double FLARING = model->flaring;
     double H = r*ASPECT*pow(r/R0,FLARING);
     double OM = sqrt(G*MSUN/r3);
+    double ALPHA = model->alpha;
     double gasdiff = ALPHA*H*H*OM;
     double St = particle->size*particle->density/H/rho_g;
     double invSt2 = 1./(1.+St*St);
@@ -383,6 +392,7 @@ void dYdt(Particle *particle, double Y[6], double derivative[6]) {
     double adragx = adragmag * (vx-gasvx);
     double adragy = adragmag * (vy-gasvy);
     double adragz = adragmag * (vz-gasvz);
+    double OMEGAFRAME = model->omegaframe;
     double arotx =  2.*vy*OMEGAFRAME + x*OMEGAFRAME*OMEGAFRAME;
     double aroty = -2.*vx*OMEGAFRAME + y*OMEGAFRAME*OMEGAFRAME;
     double arotz =  0.;

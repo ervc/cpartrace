@@ -96,6 +96,7 @@ double get_partdiff(Particle *particle, double Y[6]) {
     double OM = get_Omega(r);
     double St = particle->size*particle->density/H/rho_g;
     double invSt2 = 1/(1+St*St);
+    double ALPHA = particle->model->alpha;
     double gasdiff = ALPHA*H*H*OM;
     double partdiff = gasdiff*invSt2;
     return partdiff;
@@ -118,6 +119,7 @@ void set_initialVelocity(Particle *particle) {
     double Om = get_Omega(r);
     double tstop = St/Om;
     // get non-rotating gas vphi at particle location
+    double OMEGAFRAME = model->omegaframe;
     double vphi_gas = trilinterp_one(model, RHO, phi, r, M_PI_2) + r*sin(theta)*OMEGAFRAME;
     double eta = 1.0-pow(vphi_gas/vkep,2.0);
     // from armitage notes eq (140)

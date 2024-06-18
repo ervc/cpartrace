@@ -4,6 +4,7 @@
 #include <math.h>
 
 #include "constants.h"
+#include "variables.h"
 #include "newmesh.h"
 #include "domain.h"
 #include "model.h"

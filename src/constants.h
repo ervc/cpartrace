@@ -22,5 +22,4 @@
 // derived constants
 #define R0          ( 5.2 * AU )
 #define TIME        ( sqrt(R0*R0*R0/G/MSUN) )
-#define OMEGAFRAME  ( 1/TIME )
 
