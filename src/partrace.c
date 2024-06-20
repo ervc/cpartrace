@@ -32,8 +32,8 @@ int main(int argc, char **argv) {
     double x0 = 5.0 * AU;
     double y0 = 5.0 * AU;
     double z0 = -0.05 * AU;
-    double size0 = 1.0;
-    int np = 1;
+    double size0 = inputs->partsize;
+    int np = inputs->nparts;
     double sizes[np];
     double xs[np];
     double ys[np];
@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
     double dtout = 1*YR;
     int final_status=0;
     int all_final[np];
-    char filename[50];
+    
 
     if (DIFFUSION) {
         printf("Seeding rng for diffusion\n");
@@ -58,12 +58,18 @@ int main(int argc, char **argv) {
         srand(time(NULL));
     }
 
+    if ( makedir(inputs->outputdir) < 0 ) { exit(1); }
+
     for (int i=0; i<np; i++) {
-        if (i%10 == 0) {
-            sprintf(filename, "%s/diffout%d.txt",inputs->outputdir,i);
-        } else {
-            strcpy(filename,"NULL");
-        }
+        printf("Starting loop\n");
+        char filename[100];
+        // if ((i%10) == 0) {
+        //     sprintf(filename, "%s/diffout%d.txt",inputs->outputdir,i);
+        //     printf("%s\n",filename);
+        // } else {
+        //     strcpy(filename,"NULL");
+        // }
+        sprintf(filename, "%s/diffout%d.txt",inputs->outputdir,i);
         printf("Starting number: %d\nSaving output to %s\n",i,filename);
         Particle *p = init_Particle(model, sizes[i], xs[i], ys[i], zs[i]);
         printf("Integrating...\n");

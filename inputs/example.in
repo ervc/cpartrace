@@ -1,0 +1,10 @@
+FARGODIR    /Users/ericvc/fargo/outputs/alpha3_mplan100/
+OUTPUTDIR   outputs/alpha3_mplan100_testing_a0.01/
+NOUT        50
+
+T0          3.15e9
+TF          3.15e11
+PARTSIZE    0.01
+NPARTS      100
+
+DIFFUSION   TRUE

@@ -10,6 +10,9 @@
  *  diffusion, residence times, velocities
  */
 
+#include <errno.h>
+#include <sys/stat.h>
+
 typedef struct Inputs {
     char *fargodir;
     char *outputdir;
@@ -152,4 +155,33 @@ void print_Inputs(Inputs *in) {
     printf("  DIFFUSION      : %d\n",in->diffusion);
     printf("  RESIDENCETIMES : %d\n",in->residenceTimes);
     printf("  VELOCITIES     : %d\n",in->velocities);
+}
+
+/**
+ * @brief Make directory, copy pasted from Jinku Hu @ delftstack.com
+ * 
+ * @param name 
+ * @return int 
+ */
+int makedir(const char *name) {
+  errno = 0;
+  int ret = mkdir(name, S_IRWXU);
+  if (ret == -1) {
+    switch (errno) {
+      case EACCES:
+        printf("the parent directory does not allow write\n");
+        return -1;
+      case EEXIST:
+        printf("pathname already exists\n");
+        return 1;
+      case ENAMETOOLONG:
+        printf("pathname is too long\n");
+        return -1;
+      default:
+        perror("Error in mkdir\n");
+        return -1;
+    }
+  }
+
+  return 0;
 }
