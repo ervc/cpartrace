@@ -1,13 +1,12 @@
 // #include <stdlib.h>
 // #include <stdio.h>
-#include <string.h>
 
 // Maximum number of items that can be saved in the dictionary
 #define MAX_VAR_SIZE 100
 // maixmum number of characters in the dictionary
 #define MAX_KEY_SIZE  100
 // number of keys we want to read
-#define NKEYS 5
+#define NKEYS 4
 
 /**
  * @brief Dictionary object to store variables from the fargo model.
@@ -124,7 +123,7 @@ Variables *init_Variables_fromFile(char *fname) {
     }
     // list of keys that we want to find
     char *key_search[NKEYS] = {
-        "ALPHA", "ASPECTRATIO", "FLARINGINDEX", "PLANETMASS", "OMEGAFRAME"
+        "ALPHA", "ASPECTRATIO", "FLARINGINDEX", "OMEGAFRAME"
     };
     char* line = NULL;
     size_t len=0;

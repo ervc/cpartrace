@@ -375,19 +375,23 @@ void dYdt(Particle *particle, double Y[6], double derivative[6]) {
     double veffy = vy + partdiff/rho_g*drhody + dpartdiffdy;
     double veffz = vz + partdiff/rho_g*drhodz + dpartdiffdz;
 
-    double dsun = sqrt((x-SUNX)*(x-SUNX) + (y-SUNY)*(y-SUNY) + (z-SUNZ)*(z-SUNZ));
-    double dplan = sqrt((x-PLANX)*(x-PLANX) + (y-PLANY)*(y-PLANY) + (z-PLANZ)*(z-PLANZ));
+    double dsun = sqrt((x-model->sunpos[0])*(x-model->sunpos[0])
+                     + (y-model->sunpos[1])*(y-model->sunpos[1]) 
+                     + (z-model->sunpos[2])*(z-model->sunpos[2]));
+    double dplan = sqrt((x-model->planetpos[0])*(x-model->planetpos[0])
+                      + (y-model->planetpos[1])*(y-model->planetpos[1])
+                      + (z-model->planetpos[2])*(z-model->planetpos[2]));
     double dsun3 = dsun*dsun*dsun;
     double dplan3 = dplan*dplan*dplan;
 
     double agravmag = -G*MSUN/dsun3;
-    double agravx = agravmag * (x-SUNX);
-    double agravy = agravmag * (y-SUNY);
-    double agravz = agravmag * (z-SUNZ);
-    double aplanmag = -G*PLANETMASS/dplan3;
-    double aplanx = aplanmag * (x-PLANX);
-    double aplany = aplanmag * (y-PLANY);
-    double aplanz = aplanmag * (z-PLANZ);
+    double agravx = agravmag * (x-model->sunpos[0]);
+    double agravy = agravmag * (y-model->sunpos[1]);
+    double agravz = agravmag * (z-model->sunpos[2]);
+    double aplanmag = -G*model->planetmass/dplan3;
+    double aplanx = aplanmag * (x-model->planetpos[0]);
+    double aplany = aplanmag * (y-model->planetpos[1]);
+    double aplanz = aplanmag * (z-model->planetpos[2]);
     double adragmag = -OM/St;
     double adragx = adragmag * (vx-gasvx);
     double adragy = adragmag * (vy-gasvy);

@@ -7,18 +7,25 @@
 #define NY 256
 #define NZ 32
 
-int main() {
-    if (DIFFUSION) {
-        // seed the random number generator
-        srand(time(NULL));
+int main(int argc, char **argv) {
+    printf("Hello, World\n");
+    
+    char fargodir[100];
+    if (argc <=1 ) {
+        strcpy(fargodir,"/Users/ericvc/fargo/outputs/alpha3_mplan100/");
+        printf("No input file supplied, using default input: %s\n", fargodir);
+    } else {
+        strcpy(fargodir, argv[1]);
+        printf("Fargodir supplied: %s\n", fargodir);
     }
+
+    printf("*** CPARTRACE VERSION %s ***\n",VERSION);
     
     const size_t nx = NX;
     const size_t ny = NY;
     const size_t nz = NZ;
-    printf("Hello, World\n");
-    int nout = 50;
-    char fargodir[100] = "/Users/ericvc/fargo/outputs/alpha3_mplan0/";
+    
+    char* nout = "50";
     printf("making Model...\n");
     Model *model = init_Model(fargodir,nout,nx,ny,nz);
     printf("Model initialized!\n");
@@ -44,12 +51,13 @@ int main() {
     int final_status=0;
     int all_final[np];
     char filename[50];
-    if (!DIFFUSION) {
-        printf("No ");
-    } else {
-        printf("Yes ");
+
+    if (DIFFUSION) {
+        printf("Seeding rng for diffusion\n");
+        // seed the random number generator
+        srand(time(NULL));
     }
-    printf("Diffusion\n");
+
     for (int i=0; i<np; i++) {
         sprintf(filename, "outputs/diffout%d.txt",i);
         printf("Starting number: %d\nSaving output to %s\n",i,filename);

@@ -5,24 +5,11 @@
 // #include "newmesh.h"
 // #include "domain.h"
 
-//TODO: put these into model struct?
-
-// Planet position
-#define PLANETMASS ( 0.0 * MEARTH )
-#define PLANX    ( R0 )
-#define PLANY      0.0
-#define PLANZ      0.0
-
-// Sun's position
-#define SUNX     ( -PLANX * PLANETMASS/MSUN )
-#define SUNY       0.0
-#define SUNZ       0.0
-
 
 typedef struct Model {
     // a struct to hold info for the Many fields in a fargo model
     char fargodir[100];
-    int nout;
+    char nout[5]; // this is usually an int, but save as char* so it can be 'avg'
     size_t nx;
     size_t ny;
     size_t nz;
@@ -32,6 +19,8 @@ typedef struct Model {
     double flaring;
     double planetmass;
     double omegaframe;
+    double planetpos[3];
+    double sunpos[3];
 
     // data
     MeshField *gasdens;
@@ -60,8 +49,9 @@ typedef struct Model {
 
 void make_cartvels(Model *model);
 void init_gradrho(Model *model);
+void get_planetVars(Variables *var, Model *model) ;
 
-Model *init_Model(char* fargodir, int nout, size_t nx, size_t ny, size_t nz) {
+Model *init_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t nz) {
     // allocate memory
     Model *model = (Model*)malloc(sizeof(*model));
     if (!model) {
@@ -71,7 +61,7 @@ Model *init_Model(char* fargodir, int nout, size_t nx, size_t ny, size_t nz) {
     // string copy the fargo directory
     snprintf(model->fargodir,100,"%s",fargodir);
     // store model params
-    model->nout = nout;
+    strcpy(model->nout, nout);
     model->nx = nx;
     model->ny = ny;
     model->nz = nz;
@@ -82,10 +72,10 @@ Model *init_Model(char* fargodir, int nout, size_t nx, size_t ny, size_t nz) {
     char vthetafile[100];
     char varfile[100];
     int cx;
-    cx = snprintf(rhofile,100,"%s/gasdens%d.dat",fargodir,nout);
-    cx = snprintf(vphifile,100,"%s/gasvx%d.dat",fargodir,nout);
-    cx = snprintf(vrfile,100,"%s/gasvy%d.dat",fargodir,nout);
-    cx = snprintf(vthetafile,100,"%s/gasvz%d.dat",fargodir,nout);
+    cx = snprintf(rhofile,100,"%s/gasdens%s.dat",fargodir,nout);
+    cx = snprintf(vphifile,100,"%s/gasvx%s.dat",fargodir,nout);
+    cx = snprintf(vrfile,100,"%s/gasvy%s.dat",fargodir,nout);
+    cx = snprintf(vthetafile,100,"%s/gasvz%s.dat",fargodir,nout);
     cx = snprintf(varfile,100,"%s/variables.par",fargodir);
     if (cx>100) {
         perror("Fargodir is too long!");
@@ -110,12 +100,28 @@ Model *init_Model(char* fargodir, int nout, size_t nx, size_t ny, size_t nz) {
 
     printf("Getting variables...\n");
     Variables *var = init_Variables_fromFile(varfile);
+    printf("Getting planet variables...\n");
+    get_planetVars(var,model);
     // read the variables and rescale where necessary
-    model->alpha = get_value(var,"ALPHA");
-    model->aspect = get_value(var,"ASPECTRATIO");
-    model->flaring = get_value(var,"FLARINGINDEX");
-    model->planetmass = get_value(var,"PLANETMASS") * MSUN;
-    model->omegaframe = get_value(var,"OMEGAFRAME") * 1/TIME;
+    model->alpha = get_value(var,"ALPHA");              // unitless
+    model->aspect = get_value(var,"ASPECTRATIO");       // unitless
+    model->flaring = get_value(var,"FLARINGINDEX");     // unitless
+    model->planetmass = get_value(var,"PLANETMASS")     * MSUN;
+    model->omegaframe = get_value(var,"PLANETROTFRAME") * 1/TIME;
+
+    // get the planet(s) position(s)
+    model->planetpos[0] = get_value(var,"PLANX") * R0;
+    model->planetpos[1] = get_value(var,"PLANY") * R0;
+    model->planetpos[2] = get_value(var,"PLANZ") * R0;
+
+    // CoM is at origin;
+    model->sunpos[0] = ( -model->planetpos[0] * model->planetmass/MSUN );
+    model->sunpos[1] = ( -model->planetpos[1] * model->planetmass/MSUN );
+    model->sunpos[2] = ( -model->planetpos[2] * model->planetmass/MSUN );
+
+    printf("Read in variables: \n");
+    print_variables(var);
+
     free_Variables(var);
 
     return model;
@@ -324,6 +330,82 @@ void init_gradrho(Model *model) {
 
     idx++;
             }
+        }
+    }
+}
+
+void get_planetVars(Variables *var, Model *model) {
+    char planetfile[100];
+    int cx;
+    cx = snprintf(planetfile,100,"%s/planet0.dat",model->fargodir);
+    if (cx>100) {
+        perror("Fargo dir too long!");
+        exit(1);
+    }
+    FILE *file;
+    file = fopen(planetfile,"r");
+    if (file == NULL) {
+        perror("Cannot open planet file");
+        exit(1);
+    }
+    char* line = NULL;
+    size_t len=0;
+    ssize_t read=0;
+    while ((read = getline(&line, &len, file)) != -1) {
+        char *split_str;
+        char *nout, *x, *y, *z, *vx, *vy, *vz, *mass, *time, *rotframe;
+        split_str = strtok(line, " \t\n");
+        size_t idx = 0;
+        while (split_str != NULL) {
+            switch (idx)
+            {
+            case 0:
+                nout = split_str;
+                break;
+            case 1:
+                x = split_str;
+                break;
+            case 2:
+                y = split_str;
+                break;
+            case 3:
+                z = split_str;
+                break;
+            case 4:
+                vx = split_str;
+                break;
+            case 5:
+                vy = split_str;
+                break;
+            case 6:
+                vz = split_str;
+                break;
+            case 7:
+                mass = split_str;
+                break;
+            case 8:
+                time = split_str;
+                break;
+            case 9:
+                rotframe = split_str;
+                break;
+            default:
+                break;
+            }
+            idx++;
+            split_str = strtok(NULL," \t\n");
+        }
+        if (strcmp(nout,model->nout)==0) {
+            add_variable(var, "PLANX", atof(x));
+            add_variable(var, "PLANY", atof(y));
+            add_variable(var, "PLANZ", atof(z));
+            add_variable(var, "PLANVX", atof(vx));
+            add_variable(var, "PLANVY", atof(vy));
+            add_variable(var, "PLANVZ", atof(vz));
+            add_variable(var, "PLANETMASS", atof(mass));
+            add_variable(var, "PLANETTIME", atof(time));
+            add_variable(var, "PLANETROTFRAME", atof(rotframe));
+            break;
         }
     }
 }
