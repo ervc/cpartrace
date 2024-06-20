@@ -12,5 +12,6 @@
 #include "interpolate.h"
 #include "particle.h"
 #include "integrate.h"
+#include "partraceio.h"
 
 #define VERSION "v0.0.1"

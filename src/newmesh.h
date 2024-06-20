@@ -83,6 +83,10 @@ void read_datfile(MeshField *mesh, char* fname, int rescale) {
     // fargo data is stored as sequence of 8 byte doubles
     FILE* file;
     file = fopen(fname,"rb");
+    if (file == NULL) {
+        printf("Cannot open dat file: %s\n",fname);
+        exit(1);
+    }
     // for scaling the data to cgs
     double scale = 1.0;
     switch (rescale) {

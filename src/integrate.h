@@ -592,14 +592,14 @@ double max_dt(Particle *particle, double time, double tf, double tout) {
 }
 
 void write_output(FILE* file, Particle *part, double time) {
-    // fwrite(buffer,sizeof(buffer),1,file);
+    if (file==NULL) return;
     fprintf(file, "%e\t%e\t%e\t%e\t%e\t%e\t%e\n",
     time,part->x,part->y,part->z,part->vx,part->vy,part->vz);
 }
 
 void write_ending(FILE* file, int status) {
+    if (file==NULL) return;
     printf("Finished with status: %d\n",status);
-    // fprintf(file, "Integration completed with status: %d\n", status);
 }
 
 void heartbeat(double time, double tf) {
@@ -607,20 +607,22 @@ void heartbeat(double time, double tf) {
     fflush(stdout);
 }
 
-int integrate(Particle *particle, double tf, double dtout, char* filename) {
-    double ti = 0.0; // initial time
-
+int integrate(Particle *particle, double t0, double tf, double dtout, char* filename) {
     Model* model = particle->model;
     Domain* domain = model->domain;
 
     FILE *file;
-    file = fopen(filename,"w+");
+    if ( strcmp(filename, "NULL") == 0 ) {
+        file = NULL;
+    } else {
+        file = fopen(filename,"w+");
+    }
 
-    double time = ti;
+    double time = t0;
     int status = 0; // status of integration
     double dt = 0.0;
     // output every 1 year
-    double next_tout = dtout;
+    double next_tout = time + dtout;
     double next_heartbeat = 0.0;
     write_output(file, particle, time);
     while (status == 0) {

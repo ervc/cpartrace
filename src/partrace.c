@@ -8,26 +8,25 @@
 #define NZ 32
 
 int main(int argc, char **argv) {
-    printf("Hello, World\n");
-    
-    char fargodir[100];
-    if (argc <=1 ) {
-        strcpy(fargodir,"/Users/ericvc/fargo/outputs/alpha3_mplan100/");
-        printf("No input file supplied, using default input: %s\n", fargodir);
-    } else {
-        strcpy(fargodir, argv[1]);
-        printf("Fargodir supplied: %s\n", fargodir);
-    }
-
     printf("*** CPARTRACE VERSION %s ***\n",VERSION);
+    
+    char infile[100];
+    Inputs *inputs = init_Inputs();
+    if (argc <=1 ) {
+        printf("No input supplied, using defaults\n");
+    } else {
+        strcpy(infile, argv[1]);
+        printf("Reading input file: %s\n", infile);
+        inputs = read_inputs(infile);
+    }
+    print_Inputs(inputs);
     
     const size_t nx = NX;
     const size_t ny = NY;
     const size_t nz = NZ;
     
-    char* nout = "50";
     printf("making Model...\n");
-    Model *model = init_Model(fargodir,nout,nx,ny,nz);
+    Model *model = init_Model(inputs->fargodir,inputs->nout,nx,ny,nz);
     printf("Model initialized!\n");
 
     double x0 = 5.0 * AU;
@@ -46,7 +45,8 @@ int main(int argc, char **argv) {
         zs[i] = z0 + (0.1*AU/np)*i;
     }
 
-    double tf = 1.0e4*YR;
+    double t0 = inputs->t0;
+    double tf = inputs->tf;
     double dtout = 1*YR;
     int final_status=0;
     int all_final[np];
@@ -59,11 +59,15 @@ int main(int argc, char **argv) {
     }
 
     for (int i=0; i<np; i++) {
-        sprintf(filename, "outputs/diffout%d.txt",i);
+        if (i%10 == 0) {
+            sprintf(filename, "%s/diffout%d.txt",inputs->outputdir,i);
+        } else {
+            strcpy(filename,"NULL");
+        }
         printf("Starting number: %d\nSaving output to %s\n",i,filename);
         Particle *p = init_Particle(model, sizes[i], xs[i], ys[i], zs[i]);
         printf("Integrating...\n");
-        final_status = integrate(p, tf, dtout, filename);
+        final_status = integrate(p, t0, tf, dtout, filename);
         all_final[i] = final_status;
         free_Particle(p);
     }
@@ -74,6 +78,7 @@ int main(int argc, char **argv) {
     }
     printf("\n");
 
+    free_Inputs(inputs);
     free_Model(model);
     return 0;
 }
