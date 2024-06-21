@@ -29,20 +29,22 @@ int main(int argc, char **argv) {
     Model *model = init_Model(inputs->fargodir,inputs->nout,nx,ny,nz);
     printf("Model initialized!\n");
 
-    double x0 = 5.0 * AU;
-    double y0 = 5.0 * AU;
-    double z0 = -0.05 * AU;
+    double r0 = 8*AU;
+    double phi0 = -M_PI;
+    double z0 = 0*AU;
     double size0 = inputs->partsize;
     int np = inputs->nparts;
+    double dphi = 2*M_PI/np;
     double sizes[np];
     double xs[np];
     double ys[np];
     double zs[np];
     for (int i=0; i<np; i++) {
         sizes[i] = size0; // /( (double)pow(10.0,i) );
-        xs[i] = x0;
-        ys[i] = y0;
-        zs[i] = z0 + (0.1*AU/np)*i;
+        double phi = phi0 + dphi*i;
+        xs[i] = r0*cos(phi);
+        ys[i] = r0*sin(phi);
+        zs[i] = z0;
     }
 
     double t0 = inputs->t0;
@@ -63,14 +65,16 @@ int main(int argc, char **argv) {
     for (int i=0; i<np; i++) {
         printf("Starting loop\n");
         char filename[100];
-        // if ((i%10) == 0) {
-        //     sprintf(filename, "%s/diffout%d.txt",inputs->outputdir,i);
-        //     printf("%s\n",filename);
-        // } else {
-        //     strcpy(filename,"NULL");
-        // }
-        sprintf(filename, "%s/diffout%d.txt",inputs->outputdir,i);
-        printf("Starting number: %d\nSaving output to %s\n",i,filename);
+        // save every 10th outputß
+        if ((i%1) == 0) {
+            sprintf(filename, "%s/diffout%d.txt",inputs->outputdir,i);
+        } else {
+            strcpy(filename,"NULL");
+        }
+        printf("Starting number: %d\n",i);
+        if (strcmp(filename,"NULL") != 0) {
+            printf("Saving output to %s\n",filename);
+        }
         Particle *p = init_Particle(model, sizes[i], xs[i], ys[i], zs[i]);
         printf("Integrating...\n");
         final_status = integrate(p, t0, tf, dtout, filename);

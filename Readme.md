@@ -13,11 +13,8 @@ Main module in `partrace.c` and `partrace.h`, functions are kept in `src/` file.
 - [ ] Input files and reading in information
   - [x] Put alpha, aspect ratio, flaring angle, omegaframe, in the Model struct
   - [x] Put the planet mass, location, and sun location in the model
-  - [ ] Read in from input file
+  - [x] Read in from input file
   - [ ] read in particles from a file
-
-- [ ] Make saving particle output optional
-  - [ ] Maybe make it so if fname=="" then don't save?
 
 - [ ] Grid stats while running
   - [ ] Residence times
@@ -27,6 +24,10 @@ Main module in `partrace.c` and `partrace.h`, functions are kept in `src/` file.
 - [ ] Time dependence?
   - [ ] Make meshfields nt,nz,ny,nx?
   - [ ] Possibly include multiple planets
+
+- [ ] Collisions
+  - [ ] barnes hut tree
+  - [ ] r* tree
 
 - [x] Integration
   - [x] Really fast!
@@ -40,6 +41,9 @@ Main module in `partrace.c` and `partrace.h`, functions are kept in `src/` file.
 ### Completed tasks
 - Tests with rebound
   - Too complicated for now
+
+- [x] Make saving particle output optional
+  - [x] Maybe make it so if fname=="NULL" then don't save
 
 - [x] Interpolation
   - [x]  when phi is between phi[nx-1] and phi[0]
