@@ -2,7 +2,10 @@
 #define COMPLETE    1
 #define OOB         2
 #define ACCRETED    3
+#define CROSSED     4
 
+// if Particle crosses this radius then it is crossed from outer to inner
+#define CROSS_R  ( R0 )
 // Define the stokes number where particles are fully coupled with the gas
 #define COUPLING  ( 1.0e-3 )
 // diffusion boolean
@@ -603,12 +606,18 @@ void write_ending(FILE* file, int status) {
     printf("Finished with status: %d\n",status);
 }
 
+void write_crossing(char* crossFilename, Particle *part, double time) {
+    FILE *crossfile = fopen(crossFilename, "a");
+    write_output(crossfile,part,time);
+    fclose(crossfile);
+}
+
 void heartbeat(double time, double tf) {
     printf("%4.0f %% \r",time/tf*100.);
     fflush(stdout);
 }
 
-int integrate(Particle *particle, double t0, double tf, double dtout, char* filename, char* resFilename, char* velFilename) {
+int integrate(Particle *particle, double t0, double tf, double dtout, char* filename, char* resFilename, char* velFilename, char* crossFilename) {
     Model* model = particle->model;
     Domain* domain = model->domain;
 
@@ -636,6 +645,11 @@ int integrate(Particle *particle, double t0, double tf, double dtout, char* file
     if ( strcmp(velFilename,"NULL") != 0 ) {
         track_velocities = 1;
         velocities = calloc(velSize,sizeof(double));
+    }
+
+    int track_crossings = 0;
+    if ( strcmp(crossFilename,"NULL") != 0 ) {
+        track_crossings = 1;
     }
 
     double time = t0;
@@ -694,6 +708,11 @@ int integrate(Particle *particle, double t0, double tf, double dtout, char* file
             }
         }
 
+        if ((track_crossings) & (r < CROSS_R)) {
+            status = CROSSED;
+            write_output(file,particle,time);
+            write_crossing(crossFilename,particle,time);
+        }
 
         if (time>=tf) {
             // simulation end
@@ -726,9 +745,6 @@ int integrate(Particle *particle, double t0, double tf, double dtout, char* file
             printf("Allocated space for old restime\n");
             fread(&nparts, sizeof(double), 1, resFile);
             printf("Read in number of particles\n");
-            // for (size_t i=0; i<bigSize; i++) {
-            //     fread(&old_resTimes[i],sizeof(double),1,resFile);
-            // }
             fread(old_resTimes, sizeof(double), bigSize, resFile);
             nparts++;
             printf("Add old restimes to new restimes...\n");
@@ -740,10 +756,6 @@ int integrate(Particle *particle, double t0, double tf, double dtout, char* file
         }
         resFile = fopen(resFilename,"wb");
         fwrite(&nparts, sizeof(double), 1, resFile);
-        // for (size_t i=0; i<bigSize; i++) {
-        //     fwrite(&resTimes[i],sizeof(double),1,resFile);
-        // }
-        // fwrite(resTimes, sizeof(resTimes), 1, resFile);
         fwrite(resTimes, sizeof(double), bigSize, resFile);
 
         fclose(resFile);

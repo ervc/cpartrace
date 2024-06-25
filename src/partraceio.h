@@ -29,6 +29,7 @@ typedef struct Inputs {
     int diffusion;
     int residenceTimes;
     int velocities;
+    int crossings;
 } Inputs;
 
 Inputs *init_Inputs() {
@@ -50,6 +51,7 @@ Inputs *init_Inputs() {
     in->diffusion = 1;
     in->residenceTimes = 0;
     in->velocities = 0;
+    in->crossings = 0;
     return in;
 }
 
@@ -133,6 +135,11 @@ Inputs *read_inputs(const char* infile) {
             in->residenceTimes = read_bool(val_s);
         } else if (strcmp(key,"VELOCITIES") == 0) {
             in->velocities = read_bool(val_s);
+        } else if (strcmp(key,"CROSSINGS") == 0) {
+            in->crossings = read_bool(val_s);
+        } else {
+            printf("Ignoring unkown key in input: %s\nKeys must be all upper \
+            case and separated from the value using white space and or tabs",key);
         }
     }
     return in;
@@ -155,6 +162,7 @@ void print_Inputs(Inputs *in) {
     printf("  DIFFUSION      : %d\n",in->diffusion);
     printf("  RESIDENCETIMES : %d\n",in->residenceTimes);
     printf("  VELOCITIES     : %d\n",in->velocities);
+    printf("  CROSSINGS      : %d\n",in->crossings);
 }
 
 /**
@@ -172,10 +180,10 @@ int makedir(const char *name) {
         printf("the parent directory does not allow write\n");
         return -1;
       case EEXIST:
-        printf("pathname already exists\n");
+        printf("outputdir already exists\n");
         return 1;
       case ENAMETOOLONG:
-        printf("pathname is too long\n");
+        printf("outputdir name is too long\n");
         return -1;
       default:
         perror("Error in mkdir\n");

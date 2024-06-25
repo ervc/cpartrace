@@ -24,6 +24,8 @@ Main module in `partrace.c` and `partrace.h`, functions are kept in `src/` file.
     - [ ] N body + hydro
     - [ ] put these in hdf5?
 
+- [ ] Parallelize main loop using openMP
+
 - [ ] Time dependence?
   - [ ] Make meshfields nt,nz,ny,nx?
   - [ ] Possibly include multiple planets

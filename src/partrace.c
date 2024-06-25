@@ -76,6 +76,14 @@ int main(int argc, char **argv) {
         strcpy(velFilename,"NULL");
     }
 
+    char crossFilename[100];
+    if (inputs->crossings) {
+        sprintf(crossFilename, "%s/partCrossings.dat",inputs->outputdir);
+    } else {
+        strcpy(crossFilename,"NULL");
+    }
+
+    // TODO: Parallelize this loop
     for (int i=0; i<np; i++) {
         printf("Starting loop\n");
         char filename[100];
@@ -91,7 +99,8 @@ int main(int argc, char **argv) {
         }
         Particle *p = init_Particle(model, sizes[i], xs[i], ys[i], zs[i]);
         printf("Integrating...\n");
-        final_status = integrate(p, t0, tf, dtout, filename, resFilename, velFilename);
+        final_status = integrate(p, t0, tf, dtout, filename,
+                                 resFilename, velFilename, crossFilename);
         all_final[i] = final_status;
         free_Particle(p);
     }
