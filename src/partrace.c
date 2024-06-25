@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
         printf("Starting loop\n");
         char filename[100];
         // save every 10th output
-        if ((i%1) == 0) {
+        if ((i%10) == 0) {
             sprintf(filename, "%s/particle%d.txt",inputs->outputdir,i);
         } else {
             strcpy(filename,"NULL");
