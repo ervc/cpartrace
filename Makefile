@@ -1,5 +1,5 @@
 CXX = g++
-CC = clang
+CC = gcc
 CPPFLAGS = -std=c++17
 CCFLAGS = -Wall -O3
 
