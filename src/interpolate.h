@@ -137,6 +137,127 @@ void get_corner(Model *model, double phi, double r, double theta, size_t *corner
 }
 
 /**
+ * @brief Returns the lower corner of a cartesian location **As though z were positive**
+ * 
+ * @param model 
+ * @param x 
+ * @param y 
+ * @param z 
+ * @param corner 
+ */
+void get_corner_from_cart(Model *model, double x, double y, double z, size_t *corner) {
+    Domain *domain = model->domain;
+    size_t i=0;
+    size_t j=0;
+    size_t k=0;
+    if (z<0) {
+        z=-z;
+    }
+    double phi = atan2(y,x);
+    double r = sqrt(x*x + y*y + z*z);
+    double theta = acos(z/r);
+
+    if ((r < domain->rCenters[0]) || (r > domain->rCenters[domain->ny-1])) {
+        perror("r outside of range!");
+        exit(1);
+    }
+    if (theta < domain->thetaCenters[0]) {
+        printf("Theta = %f, theta bounds = (%f, %f)\n",theta,domain->thetaCenters[0],domain->thetaCenters[domain->nz-1]);
+        perror("theta outside of range!");
+        exit(1);
+    }
+    if (phi<domain->phiCenters[0]) {
+        i = domain->nx-1;
+    } else {
+        for (i=0;i<domain->nx;i++) {
+            if(domain->phiCenters[i] > phi) {
+                break;
+            }
+        }
+        i--;
+    }
+    for (j=0;j<domain->ny;j++) {
+        if(domain->rCenters[j] > r) {
+            break;
+        }
+    }
+    j--;
+    if (theta > domain->thetaCenters[domain->nz-1]) {
+        k = domain->nz-1;
+    } else {
+        for (k=0;k<domain->nz;k++) {
+            if(domain->thetaCenters[k] > theta) {
+                break;
+            }
+        }
+        k--;
+    }
+    corner[0]=i; corner[1]=j; corner[2]=k;
+
+}
+
+/**
+ * @brief Returns the lower corner of the cell edge at a cartesian location **As though z were positive**
+ * 
+ * @param model 
+ * @param x 
+ * @param y 
+ * @param z 
+ * @param corner 
+ */
+void get_edge_from_cart(Model *model, double x, double y, double z, size_t *corner) {
+    Domain *domain = model->domain;
+    size_t i=0;
+    size_t j=0;
+    size_t k=0;
+    if (z<0) {
+        z=-z;
+    }
+    double phi = atan2(y,x);
+    double r = sqrt(x*x + y*y + z*z);
+    double theta = acos(z/r);
+
+    if ((r < domain->rEdges[0]) || (r > domain->rEdges[domain->ny])) {
+        printf("R = %f, r bounds = (%f, %f)\n",r,domain->rEdges[0],domain->rEdges[domain->ny]);
+        perror("r outside of range!");
+        exit(1);
+    }
+    if (theta < domain->thetaEdges[0]) {
+        printf("Theta = %f, theta bounds = (%f, %f)\n",theta,domain->thetaEdges[0],domain->thetaEdges[domain->nz-1]);
+        perror("theta outside of range!");
+        exit(1);
+    }
+    if (phi<domain->phiEdges[0]) {
+        i = domain->nx-1;
+    } else {
+        for (i=0;i<domain->nx;i++) {
+            if(domain->phiEdges[i] > phi) {
+                break;
+            }
+        }
+        i--;
+    }
+    for (j=0;j<domain->ny;j++) {
+        if(domain->rEdges[j] > r) {
+            break;
+        }
+    }
+    j--;
+    if (theta > domain->thetaEdges[domain->nz-1]) {
+        k = domain->nz-1;
+    } else {
+        for (k=0;k<domain->nz;k++) {
+            if(domain->thetaEdges[k] > theta) {
+                break;
+            }
+        }
+        k--;
+    }
+    corner[0]=i; corner[1]=j; corner[2]=k;
+
+}
+
+/**
  * @brief trilinear interpolation of data, checks for negative z when called.
  * 
  * @param model 

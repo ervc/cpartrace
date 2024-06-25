@@ -21,12 +21,13 @@ typedef struct Model {
     double omegaframe;
     double planetpos[3];
     double sunpos[3];
+    double planetEnvelope;
 
     // data
     MeshField *gasdens;
-    MeshField *gasvphi;
-    MeshField *gasvr;
-    MeshField *gasvtheta;
+    // MeshField *gasvphi;
+    // MeshField *gasvr;
+    // MeshField *gasvtheta;
 
     // domain
     Domain *domain;
@@ -47,9 +48,10 @@ typedef struct Model {
 
 } Model;
 
-void make_cartvels(Model *model);
+void make_cartvels(Model *model, MeshField *gasvphi, MeshField *gasvr, MeshField *gasvtheta);
 void init_gradrho(Model *model);
-void get_planetVars(Variables *var, Model *model) ;
+void get_planetVars(Variables *var, Model *model);
+double get_soundspeed(Model *model, double r);
 
 Model *init_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t nz) {
     // allocate memory
@@ -83,16 +85,16 @@ Model *init_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t nz) {
     }
     // make the MeshFields
     model->gasdens   = init_MeshField_fromFile(rhofile,nx,ny,nz,RHO);
-    model->gasvphi   = init_MeshField_fromFile(vphifile,nx,ny,nz,VPHI);
-    model->gasvr     = init_MeshField_fromFile(vrfile,nx,ny,nz,VR);
-    model->gasvtheta = init_MeshField_fromFile(vthetafile,nx,ny,nz,VTHETA);
+    MeshField *gasvphi   = init_MeshField_fromFile(vphifile,nx,ny,nz,VPHI);
+    MeshField *gasvr     = init_MeshField_fromFile(vrfile,nx,ny,nz,VR);
+    MeshField *gasvtheta = init_MeshField_fromFile(vthetafile,nx,ny,nz,VTHETA);
 
     // initialize the domain
     model->domain = init_Domain(fargodir,nx,ny,nz);
 
     // get the cartesian gas velocities
     printf("Making cartvels...\n");
-    make_cartvels(model);
+    make_cartvels(model, gasvphi, gasvr, gasvtheta);
     
     // make the density gradients in cartesian
     printf("Getting Gradrho...\n");
@@ -119,19 +121,32 @@ Model *init_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t nz) {
     model->sunpos[1] = ( -model->planetpos[1] * model->planetmass/MSUN );
     model->sunpos[2] = ( -model->planetpos[2] * model->planetmass/MSUN );
 
+    // semi major axis of planet
+    double sma = sqrt(model->planetpos[0]*model->planetpos[0] + model->planetpos[1]*model->planetpos[1]);
+    double hillRadius = sma * pow(model->planetmass/3/MSUN,1.0/3.0);
+    double soundspeed = get_soundspeed(model,sma);
+    double bondiRadius = 2*G*model->planetmass/soundspeed/soundspeed;
+    // planet enevlope is min(hillRadius/4, bondiRadius)
+    model->planetEnvelope = (hillRadius/4. < bondiRadius) ? hillRadius/4 : bondiRadius;
+
+
     printf("Read in variables: \n");
     print_variables(var);
 
     free_Variables(var);
+
+    free_MeshField(gasvphi);
+    free_MeshField(gasvr);
+    free_MeshField(gasvtheta);
 
     return model;
 }
 
 void free_Model(Model *model) {
     free_MeshField(model->gasdens);
-    free_MeshField(model->gasvphi);
-    free_MeshField(model->gasvr);
-    free_MeshField(model->gasvtheta);
+    // free_MeshField(model->gasvphi);
+    // free_MeshField(model->gasvr);
+    // free_MeshField(model->gasvtheta);
 
     free_Domain(model->domain);
 
@@ -148,7 +163,7 @@ void free_Model(Model *model) {
     free (model);
 }
 
-void make_cartvels(Model *model) {
+void make_cartvels(Model *model, MeshField *gasvphi, MeshField *gasvr, MeshField *gasvtheta) {
     // printf("Making cartesian velocity grids\n");
     // pull out some useful values
     size_t nx = model->nx;
@@ -180,9 +195,9 @@ void make_cartvels(Model *model) {
                 // model->cartYgrid->data[idx] = y;
                 // model->cartZgrid->data[idx] = z;
 
-                vphi   = model->gasvphi->data[idx];
-                vr     = model->gasvr->data[idx];
-                vtheta = model->gasvtheta->data[idx];
+                vphi   = gasvphi->data[idx];
+                vr     = gasvr->data[idx];
+                vtheta = gasvtheta->data[idx];
 
                 // NOTE: don't multiply by r in derivs because 
                 // vphi, vtheta = r*dot(phi), r*dot(theta)
@@ -211,15 +226,15 @@ MeshField *get_mesh(Model *model, int which) {
     case RHO:
         data_values = model->gasdens;
         break;
-    case VPHI:
-        data_values = model->gasvphi;
-        break;
-    case VR:
-        data_values = model->gasvr;
-        break;
-    case VTHETA:
-        data_values = model->gasvtheta;
-        break;
+    // case VPHI:
+    //     data_values = model->gasvphi;
+    //     break;
+    // case VR:
+    //     data_values = model->gasvr;
+    //     break;
+    // case VTHETA:
+    //     data_values = model->gasvtheta;
+        // break;
     case VX:
         data_values = model->gasvx;
         break;

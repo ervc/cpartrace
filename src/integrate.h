@@ -1,6 +1,7 @@
 // integrator status values
 #define COMPLETE    1
 #define OOB         2
+#define ACCRETED    3
 
 // Define the stokes number where particles are fully coupled with the gas
 #define COUPLING  ( 1.0e-3 )
@@ -607,15 +608,34 @@ void heartbeat(double time, double tf) {
     fflush(stdout);
 }
 
-int integrate(Particle *particle, double t0, double tf, double dtout, char* filename) {
+int integrate(Particle *particle, double t0, double tf, double dtout, char* filename, char* resFilename, char* velFilename) {
     Model* model = particle->model;
     Domain* domain = model->domain;
 
     FILE *file;
+    int track_trajectory = 0;
     if ( strcmp(filename, "NULL") == 0 ) {
         file = NULL;
     } else {
+        track_trajectory=1;
         file = fopen(filename,"w+");
+    }
+
+    double *resTimes;
+    // top and bottom of disk minus edges
+    size_t bigSize = 2*model->nz*model->ny*model->nx;
+    int track_resTimes = 0;
+    if ( strcmp(resFilename,"NULL") != 0 ) {
+        track_resTimes = 1;
+        resTimes = calloc(bigSize,sizeof(double));
+    }
+
+    double *velocities;
+    size_t velSize = 2*model->nz*model->ny*model->nx*3;
+    int track_velocities = 0;
+    if ( strcmp(velFilename,"NULL") != 0 ) {
+        track_velocities = 1;
+        velocities = calloc(velSize,sizeof(double));
     }
 
     double time = t0;
@@ -636,6 +656,7 @@ int integrate(Particle *particle, double t0, double tf, double dtout, char* file
         z=particle->z;
         double r = sqrt(x*x + y*y + z*z);
         double theta = acos(z/r);
+        // check inbounds
         if ((theta < domain->thetaCenters[1]) || (theta > M_PI-domain->thetaCenters[1])) {
             status = OOB;
         }
@@ -644,6 +665,33 @@ int integrate(Particle *particle, double t0, double tf, double dtout, char* file
         }
         if (status == OOB) {
             write_output(file, particle, time);
+        }
+        // check distance from planet
+        double dx = x-model->planetpos[0];
+        double dy = y-model->planetpos[1];
+        double dz = z-model->planetpos[2];
+        double dr = sqrt(dx*dx + dy*dy + dz*dz);
+        if (dr < model->planetEnvelope) {
+            status = ACCRETED;
+        }
+
+        // track restimes or velocities as needed
+        if ((track_resTimes) || (track_velocities)) {
+            size_t corner[3] = {0,0,0};
+            get_edge_from_cart(model,x,y,z,corner);
+            if (z<0) {
+                corner[2] = 2*model->nz-1-corner[2];
+            }
+            if (track_resTimes) {
+                size_t idx = corner[2]*model->nx*model->ny + corner[1]*model->nx + corner[0];
+                resTimes[idx] += dt;
+            }
+            if (track_velocities) {
+                size_t idx = corner[2]*model->nx*model->ny*3 + corner[1]*model->nx*3 + corner[0]*3;
+                velocities[idx]   = particle->vx;
+                velocities[idx+1] = particle->vy;
+                velocities[idx+2] = particle->vx;
+            }
         }
 
 
@@ -663,6 +711,74 @@ int integrate(Particle *particle, double t0, double tf, double dtout, char* file
         
     }
     write_ending(file, status);
-    fclose(file);
+
+    if (track_resTimes) {
+        FILE *resFile;
+        // if the file exists, read the previous residence times then update
+        // our tracker, then re-open the file in write mode to write.
+        // format, array[0] = Npart, array[i>0] = restime[i-1]
+        resFile = fopen(resFilename,"rb");
+        double nparts = 1.0;
+        if (resFile != NULL) {
+            printf("Reading residence times\n");
+            double *old_resTimes = calloc(bigSize,sizeof(double));
+
+            printf("Allocated space for old restime\n");
+            fread(&nparts, sizeof(double), 1, resFile);
+            printf("Read in number of particles\n");
+            // for (size_t i=0; i<bigSize; i++) {
+            //     fread(&old_resTimes[i],sizeof(double),1,resFile);
+            // }
+            fread(old_resTimes, sizeof(double), bigSize, resFile);
+            nparts++;
+            printf("Add old restimes to new restimes...\n");
+            for (size_t i=0; i<bigSize; i++) {
+                resTimes[i] += old_resTimes[i];
+            }
+            free(old_resTimes);
+            fclose(resFile);
+        }
+        resFile = fopen(resFilename,"wb");
+        fwrite(&nparts, sizeof(double), 1, resFile);
+        // for (size_t i=0; i<bigSize; i++) {
+        //     fwrite(&resTimes[i],sizeof(double),1,resFile);
+        // }
+        // fwrite(resTimes, sizeof(resTimes), 1, resFile);
+        fwrite(resTimes, sizeof(double), bigSize, resFile);
+
+        fclose(resFile);
+        free(resTimes);
+    }
+
+    if (track_velocities) {
+        FILE *velFile;
+        // if the file exists, read the previous velocities then update
+        // our tracker, then re-open the file in write mode to write.
+        // format, array[0] = Npart, array[i>0] = velocities[i-1], shape=nz,ny,nx,3
+        velFile = fopen(velFilename,"rb");
+        double nparts = 1.0;
+        if (velFile != NULL) {
+            double *old_velocities = calloc(velSize,sizeof(double));
+            fread(&nparts, sizeof(double), 1, velFile);
+            fread(old_velocities, sizeof(double), velSize, velFile);
+            nparts++;
+            for (size_t i=0; i<velSize; i++) {
+                velocities[i] += old_velocities[i];
+            }
+            free(old_velocities);
+            fclose(velFile);
+        }
+        velFile = fopen(velFilename,"wb");
+        fwrite(&nparts, sizeof(double), 1, velFile);
+        fwrite(velocities, sizeof(double), velSize, velFile);
+
+        fclose(velFile);
+        free(velocities);
+    }
+
+    if (track_trajectory) {
+        fclose(file);
+    }
+    
     return status;
 }

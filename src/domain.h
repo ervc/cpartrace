@@ -13,14 +13,16 @@ typedef struct Domain {
     double* phiCenters;
     double* rCenters;
     double* thetaCenters;
+    double* phiEdges;
+    double* rEdges;
+    double *thetaEdges;
     // grids
     // MeshField* phiGrid;
     // MeshField* rGrid;
     // MeshField* thetaGrid;
 } Domain;
 
-void read_domfile(double* domarr, size_t nx, char* domfile, int ghostCells, int rescale);
-void create_grids(Domain* domain);
+void read_domfile(double* edges, double* centers, size_t nx, char* domfile, int ghostCells, int rescale);
 
 Domain *init_Domain(char* fargodir, size_t nx, size_t ny, size_t nz) {
     Domain *domain = (Domain*)malloc(sizeof(*domain));
@@ -46,10 +48,13 @@ Domain *init_Domain(char* fargodir, size_t nx, size_t ny, size_t nz) {
     domain->phiCenters = (double*)malloc(sizeof(double)*nx);
     domain->rCenters = (double*)malloc(sizeof(double)*ny);
     domain->thetaCenters = (double*)malloc(sizeof(double)*nz);
+    domain->phiEdges = (double*)malloc(sizeof(double)*(nx+1));
+    domain->rEdges = (double*)malloc(sizeof(double)*(ny+1));
+    domain->thetaEdges = (double*)malloc(sizeof(double)*(nz+1));
 
-    read_domfile(domain->phiCenters,nx,xfile,0,0);
-    read_domfile(domain->rCenters,ny,yfile,3,1);
-    read_domfile(domain->thetaCenters,nz,zfile,3,0);
+    read_domfile(domain->phiEdges,domain->phiCenters,nx,xfile,0,0);
+    read_domfile(domain->rEdges,domain->rCenters,ny,yfile,3,1);
+    read_domfile(domain->thetaEdges,domain->thetaCenters,nz,zfile,3,0);
 
     // create_grids(domain);
 
@@ -60,13 +65,16 @@ void free_Domain(Domain *domain) {
     free (domain->phiCenters);
     free (domain->rCenters);
     free (domain->thetaCenters);
+    free (domain->phiEdges);
+    free (domain->rEdges);
+    free (domain->thetaEdges);
     // free_MeshField(domain->phiGrid);
     // free_MeshField(domain->rGrid);
     // free_MeshField(domain->thetaGrid);
     free (domain);
 }
 
-void read_domfile(double* domarr, size_t nx, char* domfile, int ghostCells, int rescale) {
+void read_domfile(double *edges, double *centers, size_t nx, char* domfile, int ghostCells, int rescale) {
     /**
      * Reads the domain file EDGES into an array of CENTER values. 
      * ghostCells is the number of ghost cells to ignore when reading in 
@@ -97,9 +105,11 @@ void read_domfile(double* domarr, size_t nx, char* domfile, int ghostCells, int 
             continue;
         }
         double center = (ledge+redge)/2;
-        domarr[i-ghostCells-1] = center*scale;
+        centers[i-ghostCells-1] = center*scale;
+        edges[i-ghostCells-1] = ledge*scale;
         ledge = redge;
     }
+    edges[nx] = redge*scale;
 }
 
 // void create_grids(Domain* domain) {

@@ -62,10 +62,24 @@ int main(int argc, char **argv) {
 
     if ( makedir(inputs->outputdir) < 0 ) { exit(1); }
 
+    char resFilename[100];
+    if (inputs->residenceTimes) {
+        sprintf(resFilename, "%s/residenceTimes.dat",inputs->outputdir);
+    } else {
+        strcpy(resFilename,"NULL");
+    }
+
+    char velFilename[100];
+    if (inputs->velocities) {
+        sprintf(velFilename, "%s/velocities.dat",inputs->outputdir);
+    } else {
+        strcpy(velFilename,"NULL");
+    }
+
     for (int i=0; i<np; i++) {
         printf("Starting loop\n");
         char filename[100];
-        // save every 10th outputß
+        // save every 10th output
         if ((i%1) == 0) {
             sprintf(filename, "%s/diffout%d.txt",inputs->outputdir,i);
         } else {
@@ -77,7 +91,7 @@ int main(int argc, char **argv) {
         }
         Particle *p = init_Particle(model, sizes[i], xs[i], ys[i], zs[i]);
         printf("Integrating...\n");
-        final_status = integrate(p, t0, tf, dtout, filename);
+        final_status = integrate(p, t0, tf, dtout, filename, resFilename, velFilename);
         all_final[i] = final_status;
         free_Particle(p);
     }

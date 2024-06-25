@@ -16,9 +16,12 @@ Main module in `partrace.c` and `partrace.h`, functions are kept in `src/` file.
   - [x] Read in from input file
   - [ ] read in particles from a file
 
-- [ ] Grid stats while running
-  - [ ] Residence times
-  - [ ] velocities
+- [x] Grid stats while running
+  - [x] Residence times
+  - [x] velocities
+    - [ ] Do I need a distribution of velocities???
+    - [ ] Read about how other people have calculated relative velocities
+    - [ ] N body + hydro
     - [ ] put these in hdf5?
 
 - [ ] Time dependence?
@@ -57,6 +60,7 @@ Main module in `partrace.c` and `partrace.h`, functions are kept in `src/` file.
   - This is potentially not a bug, starting conditions are valid near midplane and I am starting them way up near the top of the disk...
 
 ### Fixed bugs
+- [x] Residence times is not correct because I'm gridding based on centers and not edges
 - [x] Particles mostly diffuse downward?
   - Needed to flip vz in the integration, veff was still using negative vz
 - [x] Particles seem to spend more time in the negative z side than positive z
