@@ -29,22 +29,28 @@ int main(int argc, char **argv) {
     Model *model = init_Model(inputs->fargodir,inputs->nout,nx,ny,nz);
     printf("Model initialized!\n");
 
-    double r0 = 8*AU;
-    double phi0 = -M_PI;
+    // seed the random number generator
+    srand(time(NULL));
+
+    double rmin = 7*AU;
+    double rmax = 12*AU;
+    double phimin = -M_PI;
+    double phimax = M_PI;
     double z0 = 0*AU;
     double size0 = inputs->partsize;
     int np = inputs->nparts;
-    double dphi = 2*M_PI/np;
     double sizes[np];
     double xs[np];
     double ys[np];
     double zs[np];
     for (int i=0; i<np; i++) {
         sizes[i] = size0; // /( (double)pow(10.0,i) );
-        double phi = phi0 + dphi*i;
-        xs[i] = r0*cos(phi);
-        ys[i] = r0*sin(phi);
-        zs[i] = z0;
+        double phi = random_range(phimin,phimax);
+        double r = random_range(rmin,rmax);
+        double z = z0;
+        xs[i] = r*cos(phi);
+        ys[i] = r*sin(phi);
+        zs[i] = z;
     }
 
     double t0 = inputs->t0;
@@ -52,13 +58,6 @@ int main(int argc, char **argv) {
     double dtout = 1*YR;
     int final_status=0;
     int all_final[np];
-    
-
-    if (DIFFUSION) {
-        printf("Seeding rng for diffusion\n");
-        // seed the random number generator
-        srand(time(NULL));
-    }
 
     if ( makedir(inputs->outputdir) < 0 ) { exit(1); }
 
@@ -78,7 +77,7 @@ int main(int argc, char **argv) {
 
     char crossFilename[100];
     if (inputs->crossings) {
-        sprintf(crossFilename, "%s/partCrossings.dat",inputs->outputdir);
+        sprintf(crossFilename, "%s/partCrossings.txt",inputs->outputdir);
     } else {
         strcpy(crossFilename,"NULL");
     }

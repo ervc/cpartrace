@@ -20,6 +20,18 @@ double random_double() {
     return ((double)rand()) / ((double)(RAND_MAX));
 }
 
+/**
+ * @brief Return a random double between a and b
+ * 
+ * @param a 
+ * @param b 
+ * @return double 
+ */
+double random_range(double a, double b) {
+    double R = random_double();
+    return (b-a)*R + a;
+}
+
 void get_gradrho(Particle *particle, double Y[6], double gradrho[3]) {
     double x,y,z;
     double phi,r,theta;
