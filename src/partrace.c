@@ -19,7 +19,17 @@ int main(int argc, char **argv) {
         printf("Reading input file: %s\n", infile);
         inputs = read_inputs(infile);
     }
-    print_Inputs(inputs);
+    if ( makedir(inputs->outputdir) < 0 ) { exit(1); }
+    FILE *fin;
+    char inputout[100];
+    sprintf(inputout,"%s/inputs.in",inputs->outputdir);
+    fin = fopen(inputout,"w");
+    if (fin==NULL) {
+        fprintf(stderr,"Cannot create input file in output directory!");
+        exit(1);
+    }
+    fprintf_Inputs(fin,inputs);
+    fclose(fin);
     
     const size_t nx = NX;
     const size_t ny = NY;
@@ -59,8 +69,6 @@ int main(int argc, char **argv) {
     int final_status=0;
     int all_final[np];
 
-    if ( makedir(inputs->outputdir) < 0 ) { exit(1); }
-
     char resFilename[100];
     if (inputs->residenceTimes) {
         sprintf(resFilename, "%s/residenceTimes.dat",inputs->outputdir);
@@ -88,7 +96,7 @@ int main(int argc, char **argv) {
         char filename[100];
         // save every 10th output
         if ((i%1) == 0) {
-            sprintf(filename, "%s/diffout%d.txt",inputs->outputdir,i);
+            sprintf(filename, "%s/particle%d.txt",inputs->outputdir,i);
         } else {
             strcpy(filename,"NULL");
         }

@@ -1,13 +1,13 @@
-FARGODIR    /Users/ericvc/fargo/outputs/alpha3_mplan0/
+FARGODIR    ../fargo/outputs/alpha3_mplan0/
 OUTPUTDIR   outputs/example/
 NOUT        50
 
 T0          0
 TF          3.15e11
 PARTSIZE    1.0
-NPARTS      10
+NPARTS      100
 
 DIFFUSION   TRUE
 RESIDENCETIMES   FALSE
 VELOCITIES  FALSE
-CROSSINGS   TRUE
+CROSSINGS   FALSE

@@ -21,6 +21,7 @@ typedef struct Inputs {
 
     double t0;
     double tf;
+    double dtout;
     double partsize;
     double partdens;
 
@@ -45,6 +46,7 @@ Inputs *init_Inputs() {
     strcpy(in->partfile,"0");
     in->t0       = 0.0;
     in->tf       = 1.0e5 * YR;
+    in->dtout    = 1.0 * YR;
     in->partsize = 1.0; // cm
     in->partdens = PARTDENSITY;
     in->nparts = 100;
@@ -123,6 +125,8 @@ Inputs *read_inputs(const char* infile) {
             in->t0 = atof(val_s);
         } else if (strcmp(key,"TF") == 0) {
             in->tf = atof(val_s);
+        } else if (strcmp(key,"DTOUT") == 0) {
+            in->dtout = atof(val_s);
         } else if (strcmp(key,"PARTSIZE") == 0) {
             in->partsize = atof(val_s);
         } else if (strcmp(key,"PARTDENS") == 0) {
@@ -145,24 +149,29 @@ Inputs *read_inputs(const char* infile) {
     return in;
 }
 
+void fprintf_Inputs(FILE* fout, Inputs *in) {
+    fprintf(fout,"Strings: \n");
+    fprintf(fout,"  FARGODIR  : %s\n",in->fargodir);
+    fprintf(fout,"  OUTPUTDIR : %s\n",in->outputdir);
+    fprintf(fout,"  NOUT      : %s\n",in->nout);
+    fprintf(fout,"  PARTFILE  : %s\n",in->partfile);
+    fprintf(fout,"Doubles: \n");
+    fprintf(fout,"  T0       : %f\n",in->t0);
+    fprintf(fout,"  TF       : %f\n",in->tf);
+    fprintf(fout,"  DTOUT    : %f\n",in->dtout);
+    fprintf(fout,"  PARTSIZE : %f\n",in->partsize);
+    fprintf(fout,"  PARTDENS : %f\n",in->partdens);
+    fprintf(fout,"Integers: \n");
+    fprintf(fout,"  NPARTS : %d\n",in->nparts);
+    fprintf(fout,"Booleans: \n");
+    fprintf(fout,"  DIFFUSION      : %d\n",in->diffusion);
+    fprintf(fout,"  RESIDENCETIMES : %d\n",in->residenceTimes);
+    fprintf(fout,"  VELOCITIES     : %d\n",in->velocities);
+    fprintf(fout,"  CROSSINGS      : %d\n",in->crossings);
+}
+
 void print_Inputs(Inputs *in) {
-    printf("Strings: \n");
-    printf("  FARGODIR  : %s\n",in->fargodir);
-    printf("  OUTPUTDIR : %s\n",in->outputdir);
-    printf("  NOUT      : %s\n",in->nout);
-    printf("  PARTFILE  : %s\n",in->partfile);
-    printf("Doubles: \n");
-    printf("  T0       : %f\n",in->t0);
-    printf("  TF       : %f\n",in->tf);
-    printf("  PARTSIZE : %f\n",in->partsize);
-    printf("  PARTDENS : %f\n",in->partdens);
-    printf("Integers: \n");
-    printf("  NPARTS : %d\n",in->nparts);
-    printf("Booleans: \n");
-    printf("  DIFFUSION      : %d\n",in->diffusion);
-    printf("  RESIDENCETIMES : %d\n",in->residenceTimes);
-    printf("  VELOCITIES     : %d\n",in->velocities);
-    printf("  CROSSINGS      : %d\n",in->crossings);
+    fprintf_Inputs(stdout,in);
 }
 
 /**
