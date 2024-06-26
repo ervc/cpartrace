@@ -528,9 +528,9 @@ void rkstep_particle(Particle *particle, double dt) {
         double Yprime[6] = {xprime, yprime, zprime, 0, 0, 0};
         double Dxprime = get_partdiff(particle, Yprime);
         // 3 random numbers between -1. and 1.
-        double Rx = random_double()*2.0-1.0;
-        double Ry = random_double()*2.0-1.0;
-        double Rz = random_double()*2.0-1.0;
+        double Rx = random_range(-1.0,1.0);
+        double Ry = random_range(-1.0,1.0);
+        double Rz = random_range(-1.0,1.0);
         // 6.0 = 2.0/(1/3) = 2/std of distribution
         double randkick = sqrt(6.0*Dxprime*dt);
         result[0] += Rx*randkick;
@@ -716,7 +716,7 @@ int integrate(Particle *particle, double t0, double tf, double dtout, char* file
                 size_t idx = corner[2]*model->nx*model->ny*3 + corner[1]*model->nx*3 + corner[0]*3;
                 velocities[idx]   = particle->vx;
                 velocities[idx+1] = particle->vy;
-                velocities[idx+2] = particle->vx;
+                velocities[idx+2] = particle->vz;
             }
         }
 
