@@ -53,7 +53,7 @@ class ParticleOutput:
         t0: float = params["t0"]
         tf: float = params["tf"]
         dtout: float = params["dtout"]
-        nt: int = int( (tf-t0)/dtout )+1 #plus one just in case
+        nt: int = int( (tf-t0)/dtout )+1+1 #plus one just in case
         self.fname = outputdir+f'/particle{partnumber}.txt'
         self.x = np.ones(nt)*np.nan
         self.y = np.ones(nt)*np.nan
@@ -73,6 +73,50 @@ class ParticleOutput:
                 (self.times[i],self.x[i],self.y[i],self.z[i],
                  self.vx[i],self.vy[i],self.vz[i]) = map(float,line.split())
                 i+=1
+
+class ParticleArray:
+    def __init__(self,outputdir: str, N_parts: Union[int, list[int]]) -> None:
+        """Helper wrapper for a collection of particles from an output array
+
+        Args:
+            outputdir (str): Output directory
+            N_parts (int | list[int]): List of particle numbers to read in. If
+                an integer is supplied, then N_parts = list(range(N_parts))
+        """
+        params = ModelParams(outputdir)
+        t0: float = params["t0"]
+        tf: float = params["tf"]
+        dtout: float = params["dtout"]
+        nt: int = int( (tf-t0)/dtout )+1+1 #plus one for the initial positiona and an extra just in case
+        self.outputdir = outputdir
+        N_parts_: list[int] = [0]
+        if type(N_parts) == int:
+            N_parts_ = list(range(N_parts))
+        elif type(N_parts) == list:
+            N_parts_ = N_parts
+        else:
+            raise TypeError("N_parts must be an int or list of ints")
+        self.N_parts = N_parts_
+        self.len = len(self.N_parts)
+        shape = (self.len,nt)
+        self.x = np.ones(shape)*np.nan
+        self.y = np.ones(shape)*np.nan
+        self.z = np.ones(shape)*np.nan
+        self.vx = np.ones(shape)*np.nan
+        self.vy = np.ones(shape)*np.nan
+        self.vz = np.ones(shape)*np.nan
+        self.times = np.ones(shape)*np.nan
+        for i,n in enumerate(self.N_parts):
+            part = ParticleOutput(self.outputdir,n)
+            self.x[i] = part.x
+            self.y[i] = part.y
+            self.z[i] = part.z
+            self.vx[i] = part.vx
+            self.vy[i] = part.vy
+            self.vz[i] = part.vz
+            self.times[i] = part.times
+
+
 
 def make_biggrid(smallarr: npt.NDArray, flip: str='') -> npt.NDArray:
     """Take an array of the half the disk and extend to the full disk.
@@ -113,3 +157,21 @@ class ResidenceTimes:
         resout = np.fromfile(self.resfile)
         self.nparts = resout[0]
         self.restimes = resout[1:].reshape((2*nz,ny,nx))
+
+class Velocities:
+    def __init__(self,outputdir: str) -> None:
+        """Helper to read the velocities from CPartrace
+
+        Args:
+            outputdir (str): Output directory
+        """
+        nz = 32
+        ny = 256
+        nx = 2048
+        self.velfile = outputdir+'/velocities.dat'
+        velout = np.fromfile(self.velfile)
+        self.nparts = velout[0]
+        self.allvels = velout[1:].reshape((2*nz,ny,nx,3))
+        self.vx = self.allvels[:,:,:,0]
+        self.vy = self.allvels[:,:,:,1]
+        self.vz = self.allvels[:,:,:,2]
