@@ -9,7 +9,7 @@
 // Define the stokes number where particles are fully coupled with the gas
 #define COUPLING  ( 1.0e-3 )
 // diffusion boolean
-#define DIFFUSION   1
+// #define DIFFUSION   1
 
 /**
  * @brief Returns a random double between 0.0 and 1.0
@@ -488,16 +488,16 @@ void rk4(Particle *particle, double h, double result[6]) {
  * @param particle 
  * @param dt 
  */
-void rkstep_particle(Particle *particle, double dt) {
+void rkstep_particle(Particle *particle, double dt, int DIFFUSION) {
     double result[6];
     rk4(particle, dt, result);
     double St = get_Stokes(particle);
     if (St < COUPLING) {
         double gasvx, gasvy, gasvz;
         double x,y,z,phi,r,theta;
-        x = particle->x;
-        y = particle->y;
-        z = particle->z;
+        x = result[0];
+        y = result[1];
+        z = result[2];
         // interp for the gas velocities to give the particle
         // trilinterp_one function checks for -z so we don't have to
         phi = atan2(y,x);
@@ -574,7 +574,6 @@ double get_dt(Particle *particle) {
     if (tstop < dt) {dt=tstop;}
     if (tdiff < dt) {dt=tdiff;}
     if (trho  < dt) {dt=trho; }
-
     return dt;
 }
 
@@ -629,7 +628,8 @@ void heartbeat(double time, double tf) {
     fflush(stdout);
 }
 
-int integrate(Particle *particle, double t0, double tf, double dtout, char* filename, char* resFilename, char* velFilename, char* crossFilename) {
+int integrate(Particle *particle, double t0, double tf, double dtout, int DIFFUSION,
+        char* filename, char* resFilename, char* velFilename, char* crossFilename) {
     Model* model = particle->model;
     Domain* domain = model->domain;
 
@@ -638,6 +638,7 @@ int integrate(Particle *particle, double t0, double tf, double dtout, char* file
     if ( strcmp(filename, "NULL") == 0 ) {
         file = NULL;
     } else {
+        printf("Tracking Particle\n");
         track_trajectory=1;
         file = fopen(filename,"w+");
     }
@@ -647,6 +648,7 @@ int integrate(Particle *particle, double t0, double tf, double dtout, char* file
     size_t bigSize = 2*model->nz*model->ny*model->nx;
     int track_resTimes = 0;
     if ( strcmp(resFilename,"NULL") != 0 ) {
+        printf("Tracking restime\n");
         track_resTimes = 1;
         resTimes = calloc(bigSize,sizeof(double));
     }
@@ -655,12 +657,14 @@ int integrate(Particle *particle, double t0, double tf, double dtout, char* file
     size_t velSize = 2*model->nz*model->ny*model->nx*3;
     int track_velocities = 0;
     if ( strcmp(velFilename,"NULL") != 0 ) {
+        printf("Tracking velocities\n");
         track_velocities = 1;
         velocities = calloc(velSize,sizeof(double));
     }
 
     int track_crossings = 0;
     if ( strcmp(crossFilename,"NULL") != 0 ) {
+        printf("Tracking Crossings\n");
         track_crossings = 1;
     }
 
@@ -673,7 +677,7 @@ int integrate(Particle *particle, double t0, double tf, double dtout, char* file
     write_output(file, particle, time);
     while (status == 0) {
         dt = max_dt(particle, time, tf, next_tout);
-        rkstep_particle(particle, dt);
+        rkstep_particle(particle, dt, DIFFUSION);
         time += dt;
         
         double x,y,z;
@@ -714,9 +718,9 @@ int integrate(Particle *particle, double t0, double tf, double dtout, char* file
             }
             if (track_velocities) {
                 size_t idx = corner[2]*model->nx*model->ny*3 + corner[1]*model->nx*3 + corner[0]*3;
-                velocities[idx]   = particle->vx;
-                velocities[idx+1] = particle->vy;
-                velocities[idx+2] = particle->vz;
+                velocities[idx]   += particle->vx;
+                velocities[idx+1] += particle->vy;
+                velocities[idx+2] += particle->vz;
             }
         }
 

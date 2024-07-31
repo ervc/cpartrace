@@ -42,11 +42,12 @@ int main(int argc, char **argv) {
     // seed the random number generator
     srand(time(NULL));
 
-    double rmin = 7*AU;
-    double rmax = 12*AU;
+    double rmin = 8*AU;
+    double rmax = 10*AU;
     double phimin = -M_PI;
     double phimax = M_PI;
-    double z0 = 0*AU;
+    double zmin = -0.5; //scaleheight
+    double zmax =  0.5; //scaleheight
     double size0 = inputs->partsize;
     int np = inputs->nparts;
     double sizes[np];
@@ -56,8 +57,9 @@ int main(int argc, char **argv) {
     for (int i=0; i<np; i++) {
         sizes[i] = size0; // /( (double)pow(10.0,i) );
         double phi = random_range(phimin,phimax);
-        double r = random_range(rmin,rmax);
-        double z = z0;
+        // double r = random_range(rmin,rmax);
+        double r = rmin+ i*(rmax-rmin)/np;
+        double z = r*0.05*random_range(zmin,zmax);
         xs[i] = r*cos(phi);
         ys[i] = r*sin(phi);
         zs[i] = z;
@@ -95,7 +97,7 @@ int main(int argc, char **argv) {
         printf("Starting loop\n");
         char filename[100];
         // save every 10th output
-        if ((i%10) == 0) {
+        if ((i%1) == 0) {
             sprintf(filename, "%s/particle%d.txt",inputs->outputdir,i);
         } else {
             strcpy(filename,"NULL");
@@ -106,8 +108,8 @@ int main(int argc, char **argv) {
         }
         Particle *p = init_Particle(model, sizes[i], xs[i], ys[i], zs[i]);
         printf("Integrating...\n");
-        final_status = integrate(p, t0, tf, dtout, filename,
-                                 resFilename, velFilename, crossFilename);
+        final_status = integrate(p, t0, tf, dtout, inputs->diffusion,
+                                 filename, resFilename, velFilename, crossFilename);
         all_final[i] = final_status;
         free_Particle(p);
     }
@@ -121,4 +123,11 @@ int main(int argc, char **argv) {
     free_Inputs(inputs);
     free_Model(model);
     return 0;
+}
+
+int run_partrace(char *inputfile) {
+    char *argv[2];
+    strcpy(argv[0],"./partrace");
+    strcpy(argv[1],inputfile);
+    return main(2,argv);
 }
