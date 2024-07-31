@@ -172,6 +172,56 @@ class Velocities:
         velout = np.fromfile(self.velfile)
         self.nparts = velout[0]
         self.allvels = velout[1:].reshape((2*nz,ny,nx,3))
-        self.vx = self.allvels[:,:,:,0]
-        self.vy = self.allvels[:,:,:,1]
-        self.vz = self.allvels[:,:,:,2]
+        self.vx = self.allvels[:,:,:,0]/self.nparts
+        self.vy = self.allvels[:,:,:,1]/self.nparts
+        self.vz = self.allvels[:,:,:,2]/self.nparts
+
+import ctypes as ct
+
+def main(infile: str):
+    libpartrace = ct.CDLL("src/libpartrace.so")
+    libpartrace.run_partrace(ct.c_char_p(str.encode(infile)))
+
+def read_equilibrium_velocity(eqfile: str) -> tuple[npt.NDArray, npt.NDArray, npt.NDArray]:
+    eqvels = np.fromfile(eqfile).reshape((32,256,2048,3))
+    eqvx = eqvels[:,:,:,0]
+    eqvy = eqvels[:,:,:,1]
+    eqvz = eqvels[:,:,:,2]
+    return eqvx,eqvy,eqvz
+
+def solve_equilibrium_velocity_grid(fargodir: str, nout: int|str,
+        outfile: str, grainsize: float) -> None:
+    libgrainvels = ct.CDLL("src/libgrainvelocities.so")
+    res = libgrainvels.py_solve_grid(
+        ct.create_string_buffer(fargodir.encode(),100),
+        ct.create_string_buffer(str(nout).encode(),5),
+        ct.create_string_buffer(outfile.encode(),100),
+        ct.c_double(grainsize)
+    )
+    if res!=0:
+        print("something went wrong")
+
+def get_equilibrium_velocity(fargodir: str, nout: int|str, x: float, y: float, z: float, s: float
+                             ) -> tuple[float, float, float]:
+    libgrainvels = ct.CDLL("src/libgrainvelocities.so")
+    pywrapper = libgrainvels.py_get_equilibrium_velocity
+    vx = ct.c_double(0.0)
+    vy = ct.c_double(0.0)
+    vz = ct.c_double(0.0)
+    nout = str(nout)
+    # return ct.c_wchar_p(fargodir).value
+    pywrapper(
+        ct.c_char_p(str.encode(fargodir)),
+        ct.c_char_p(str.encode(nout)),
+        ct.c_double(x),
+        ct.c_double(y),
+        ct.c_double(z),
+        ct.c_double(s),
+        ct.byref(vx),
+        ct.byref(vy),
+        ct.byref(vz)
+    )
+    return vx.value, vy.value, vz.value
+
+if __name__ == '__main__':
+    main("inputs/example.in")
