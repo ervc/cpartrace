@@ -92,6 +92,13 @@ int main(int argc, char **argv) {
         strcpy(crossFilename,"NULL");
     }
 
+    char allpartsFilename[100];
+    sprintf(allpartsFilename, "%s/allparts.txt",inputs->outputdir);
+    FILE *allpartsf;
+    allpartsf = fopen(allpartsFilename,"w+");
+    fprintf(allpartsf,"x0\ty0\tz0\txf\tyf\tzf\n");
+    fclose(allpartsf);
+
     // TODO: Parallelize this loop
     for (int i=0; i<np; i++) {
         printf("Starting loop\n");
@@ -110,6 +117,10 @@ int main(int argc, char **argv) {
         printf("Integrating...\n");
         final_status = integrate(p, t0, tf, dtout, inputs->diffusion,
                                  filename, resFilename, velFilename, crossFilename);
+        // save to the allparts file
+        allpartsf = fopen(allpartsFilename,"a");
+        fprintf(allpartsf, "%f\t%f\t%f\t%f\t%f\t%f",xs[i],ys[i],zs[i],p->x,p->y,p->z);
+        fclose(allpartsf);
         all_final[i] = final_status;
         free_Particle(p);
     }
