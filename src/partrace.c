@@ -57,8 +57,8 @@ int main(int argc, char **argv) {
     for (int i=0; i<np; i++) {
         sizes[i] = size0; // /( (double)pow(10.0,i) );
         double phi = random_range(phimin,phimax);
-        // double r = random_range(rmin,rmax);
-        double r = rmin+ i*(rmax-rmin)/np;
+        double r = random_range(rmin,rmax);
+        //double r = rmin+ i*(rmax-rmin)/np;
         double z = r*0.05*random_range(zmin,zmax);
         xs[i] = r*cos(phi);
         ys[i] = r*sin(phi);
@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
 
     double t0 = inputs->t0;
     double tf = inputs->tf;
-    double dtout = 1*YR;
+    double dtout = inputs->dtout;
     int final_status=0;
     int all_final[np];
 
@@ -119,7 +119,7 @@ int main(int argc, char **argv) {
                                  filename, resFilename, velFilename, crossFilename);
         // save to the allparts file
         allpartsf = fopen(allpartsFilename,"a");
-        fprintf(allpartsf, "%f\t%f\t%f\t%f\t%f\t%f",xs[i],ys[i],zs[i],p->x,p->y,p->z);
+        fprintf(allpartsf, "%f\t%f\t%f\t%f\t%f\t%f\n",xs[i],ys[i],zs[i],p->x,p->y,p->z);
         fclose(allpartsf);
         all_final[i] = final_status;
         free_Particle(p);
