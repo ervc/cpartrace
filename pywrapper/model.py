@@ -13,12 +13,21 @@ class Model():
 
         ### TODO: read in model params
 
-    def get_scaleheight(self,x: float,y: float,z: float):
+    def get_omega(self, x: float, y: float, z: float) -> float:
+        r = np.sqrt(x*x + y*y + z*z)
+        return np.sqrt(const.G*const.MSUN/r)/r
+
+    def get_scaleheight(self,x: float,y: float,z: float) -> float:
         ### TODO: make this general
         r = np.sqrt(x*x + y*y + z*z)
         return 0.05*r*(r/const.R0)**(1/4)
+    
+    def get_soundspeed(self,x: float, y: float,z: float) -> float:
+        OM = self.get_omega(x,y,z)
+        H  = self.get_scaleheight(x,y,z)
+        return H*OM
         
-    def get_planet_envelope(self):
+    def get_planet_envelope(self,mplan):
         ### TODO: make this general
         """
         double hillRadius = sma * pow(model->planetmass/3/MSUN,1.0/3.0);
@@ -28,9 +37,9 @@ class Model():
         model->planetEnvelope = (hillRadius/4. < bondiRadius) ? hillRadius/4 : bondiRadius;
         """
         sma = const.R0
-        m_pl = 300*const.MEARTH
+        m_pl = mplan*const.MEARTH
         hill = sma * (m_pl/3/const.MSUN)**(1/3)
-        cs = self.get_scaleheight(sma,0,0)
+        cs = self.get_soundspeed(sma,0,0)
         bondi = 2*const.G*m_pl/cs/cs
         return min(hill/4, bondi)
         

@@ -3,6 +3,8 @@ from typing import Union, Any
 import numpy as np
 import numpy.typing as npt
 
+from . import constants as const
+
 class ModelParams:
     def __init__(self,directory: str) -> None:
         """Wrapper for parameters for the partrace run
@@ -52,7 +54,7 @@ class ParticleOutput:
         params = ModelParams(outputdir)
         t0: float = params["t0"]
         tf: float = params["tf"]
-        dtout: float = params["dtout"]
+        dtout: float = 1*const.YR # params["dtout"]
         nt: int = int( (tf-t0)/dtout )+1+1 #plus one just in case
         self.fname = outputdir+f'/particle{partnumber}.txt'
         self.x = np.ones(nt)*np.nan
@@ -86,7 +88,7 @@ class ParticleArray:
         params = ModelParams(outputdir)
         t0: float = params["t0"]
         tf: float = params["tf"]
-        dtout: float = params["dtout"]
+        dtout: float = 1*const.YR # params["dtout"]
         nt: int = int( (tf-t0)/dtout )+1+1 #plus one for the initial positiona and an extra just in case
         self.outputdir = outputdir
         N_parts_: list[int] = [0]
@@ -175,6 +177,59 @@ class Velocities:
         self.vx = self.allvels[:,:,:,0]/self.nparts
         self.vy = self.allvels[:,:,:,1]/self.nparts
         self.vz = self.allvels[:,:,:,2]/self.nparts
+
+class Crossings:
+    def __init__(self,outputdir: str) -> None:
+        """Helper to read in the particle crossing times and
+        locations from CPartrace
+        
+        Args:
+            outputdir (str): Output directory
+        """
+        self.crossfile = outputdir+'/partCrossings.txt'
+        self.params = ModelParams(outputdir)
+        crosstimes = []
+        crossx     = []
+        crossy     = []
+        crossz     = []
+        try:
+            with open(self.crossfile,'r') as f:
+                for line in f:
+                    t,x,y,z,*_ = list(map(float,line.split()))
+                    crosstimes.append(t)
+                    crossx.append(x)
+                    crossy.append(y)
+                    crossz.append(z)
+        except FileNotFoundError:
+            pass
+        self.crosstimes = np.array(crosstimes)
+        self.crossx = np.array(crossx)
+        self.crossy = np.array(crossy)
+        self.crossz = np.array(crossz)
+
+        self.crossr = np.sqrt(self.crossx**2
+                              + self.crossy**2
+                              + self.crossz**2)
+        self.crossphi = np.arctan2(self.crossy,self.crossx)
+
+    from matplotlib.lines import Line2D
+    from matplotlib.axes import Axes
+    def plot_cdf(self,ax: Axes, fraction=False, *args,**kwargs) -> Line2D:
+        """
+        plot the (e)cdf of particles crossed as a function of time
+        """
+        if len(self.crosstimes)==0:
+            X = np.array([0,self.params['tf']])
+            Y = np.array([0,0])
+        else:
+            X = np.sort(self.crosstimes)
+            Y = np.arange(1,len(X)+1)
+            X = np.concatenate(([0],X,[self.params['tf']]))
+            Y = np.concatenate(([0],Y,[Y[-1]]))
+        if fraction:
+            Y = Y/1000
+        return ax.plot(X/const.YR,Y,*args,**kwargs)
+
 
 import ctypes as ct
 
