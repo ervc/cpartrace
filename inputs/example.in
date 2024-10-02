@@ -1,13 +1,11 @@
-FARGODIR    ../fargo/outputs/alpha3_mplan0/
-OUTPUTDIR   outputs/example/
+FARGODIR    ../fargo/outputs/alpha3_mplan100/
+OUTPUTDIR   outputs/alpha3_mplan100_a0.1/
 NOUT        50
-
-T0          0
+T0          0.0
 TF          3.15e11
-PARTSIZE    1.0
-NPARTS      100
-
+PARTSIZE    0.1
+NPARTS      10
 DIFFUSION   TRUE
-RESIDENCETIMES   FALSE
-VELOCITIES  FALSE
+RESIDENCETIMES   TRUE
+VELOCITIES  TRUE
 CROSSINGS   FALSE
