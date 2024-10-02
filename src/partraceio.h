@@ -43,7 +43,7 @@ Inputs *init_Inputs() {
     in->nout      = malloc(sizeof(char)*5);
     strcpy(in->nout,"50");
     in->partfile  = malloc(sizeof(char)*100);
-    strcpy(in->partfile,"0");
+    strcpy(in->partfile,"NULL");
     in->t0       = 0.0;
     in->tf       = 1.0e5 * YR;
     in->dtout    = 1.0 * YR;

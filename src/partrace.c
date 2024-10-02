@@ -42,12 +42,19 @@ int main(int argc, char **argv) {
     // seed the random number generator
     srand(time(NULL));
 
-    double rmin = 7.0*AU;
-    double rmax = 7.0*AU;
+    
+    double size0 = inputs->partsize;
+    int np = inputs->nparts;
+    double sizes[np];
+    double xs[np];
+    double ys[np];
+    double zs[np];
+    double rmin = 8*AU;
+    double rmax = 10*AU;
     double phimin = -M_PI;
     double phimax = M_PI;
-    double zmin = -0.05; //scaleheight
-    double zmax =  0.05; //scaleheight
+    double zmin = -0.5; //scaleheight
+    double zmax =  0.5; //scaleheight
     double size0 = inputs->partsize;
     int np = inputs->nparts;
     double sizes[np];
@@ -97,7 +104,7 @@ int main(int argc, char **argv) {
     sprintf(allpartsFilename, "%s/allparts.txt",inputs->outputdir);
     FILE *allpartsf;
     allpartsf = fopen(allpartsFilename,"w+");
-    fprintf(allpartsf,"x0\ty0\tz0\txf\tyf\tzf\n");
+    fprintf(allpartsf,"size\tx0\ty0\tz0\txf\tyf\tzf\n");
     fclose(allpartsf);
 
     // TODO: Parallelize this loop
@@ -120,7 +127,7 @@ int main(int argc, char **argv) {
                                  filename, resFilename, velFilename, crossFilename);
         // save to the allparts file
         allpartsf = fopen(allpartsFilename,"a");
-        fprintf(allpartsf, "%f\t%f\t%f\t%f\t%f\t%f\n",xs[i],ys[i],zs[i],p->x,p->y,p->z);
+        fprintf(allpartsf, "%f\t%f\t%f\t%f\t%f\t%f\n",p->size,xs[i],ys[i],zs[i],p->x,p->y,p->z);
         fclose(allpartsf);
         all_final[i] = final_status;
         free_Particle(p);
