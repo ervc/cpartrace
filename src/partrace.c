@@ -55,12 +55,6 @@ int main(int argc, char **argv) {
     double phimax = M_PI;
     double zmin = -0.5; //scaleheight
     double zmax =  0.5; //scaleheight
-    double size0 = inputs->partsize;
-    int np = inputs->nparts;
-    double sizes[np];
-    double xs[np];
-    double ys[np];
-    double zs[np];
     for (int i=0; i<np; i++) {
         sizes[i] = size0; // /( (double)pow(10.0,i) );
         double phi = random_range(phimin,phimax);
