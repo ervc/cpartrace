@@ -96,6 +96,7 @@ void get_corner(Model *model, double phi, double r, double theta, size_t *corner
     size_t k=0;
 
     if ((r < domain->rCenters[0]) || (r > domain->rCenters[model->ny-1])) {
+        printf("r = %e, r bounds = (%e, %e)\n",r,domain->rCenters[0],domain->rCenters[model->ny-1]);
         perror("r outside of range!");
         exit(1);
     }

@@ -26,6 +26,7 @@ typedef struct Inputs {
     double partdens;
 
     int nparts;
+    int modeltype;
 
     int diffusion;
     int residenceTimes;
@@ -50,6 +51,7 @@ Inputs *init_Inputs() {
     in->partsize = 1.0; // cm
     in->partdens = PARTDENSITY;
     in->nparts = 100;
+    in->modeltype = FARGO_MODEL;
     in->diffusion = 1;
     in->residenceTimes = 0;
     in->velocities = 0;
@@ -84,6 +86,17 @@ int read_bool(const char *bin) {
     }
     printf("Cannot parse boolean: %s\n",bin);
     exit(1);
+}
+
+int read_modeltype(const char *cin) {
+    if (strcmp(cin,"FARGO")==0) {
+        return FARGO_MODEL;
+    } else if (strcmp(cin,"JUPITER")==0) {
+        return JUPITER_MODEL;
+    } else {
+        printf("Cannot parse modeltyp: %s\n",cin);
+        exit(1);
+    }
 }
 
 Inputs *read_inputs(const char* infile) {
@@ -133,6 +146,8 @@ Inputs *read_inputs(const char* infile) {
             in->partdens = atof(val_s);
         } else if (strcmp(key,"NPARTS") == 0) {
             in->nparts = atoi(val_s);
+        } else if (strcmp(key,"MODELTYPE") == 0) {
+            in->modeltype = read_modeltype(val_s);
         } else if (strcmp(key,"DIFFUSION") == 0) {
             in->diffusion = read_bool(val_s);
         } else if (strcmp(key,"RESIDENCETIMES") == 0) {
@@ -163,6 +178,7 @@ void fprintf_Inputs(FILE* fout, Inputs *in) {
     fprintf(fout,"  PARTDENS : %f\n",in->partdens);
     fprintf(fout,"Integers: \n");
     fprintf(fout,"  NPARTS : %d\n",in->nparts);
+    fprintf(fout,"  MODELTYPE : %d\n",in->modeltype);
     fprintf(fout,"Booleans: \n");
     fprintf(fout,"  DIFFUSION      : %d\n",in->diffusion);
     fprintf(fout,"  RESIDENCETIMES : %d\n",in->residenceTimes);

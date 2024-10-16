@@ -23,3 +23,6 @@
 #define R0          ( 5.2 * AU )
 #define TIME        ( sqrt(R0*R0*R0/G/MSUN) )
 
+// Read in from FARGO or JUPITER output
+#define FARGO_MODEL   1
+#define JUPITER_MODEL 2

@@ -3,13 +3,14 @@
 // #include "mlinterp.hpp"
 
 // defaults
-#define NX 2048
-#define NY 256
-#define NZ 32
+#define NX 680
+#define NY 215
+#define NZ 20
 
 int main(int argc, char **argv) {
     printf("*** CPARTRACE VERSION %s ***\n",VERSION);
     
+    // read inputs
     char infile[100];
     Inputs *inputs = init_Inputs();
     if (argc <=1 ) {
@@ -35,9 +36,12 @@ int main(int argc, char **argv) {
     const size_t ny = NY;
     const size_t nz = NZ;
     
+    // make the model
     printf("making Model...\n");
-    Model *model = init_Model(inputs->fargodir,inputs->nout,nx,ny,nz);
+    Model *model = init_Model(inputs->modeltype,inputs->fargodir,inputs->nout,nx,ny,nz);
     printf("Model initialized!\n");
+
+    printf("R range: %e, %e au\n",model->domain->rCenters[0]/AU,model->domain->rCenters[model->ny-1]/AU);
 
     // seed the random number generator
     srand(time(NULL));
@@ -49,8 +53,8 @@ int main(int argc, char **argv) {
     double xs[np];
     double ys[np];
     double zs[np];
-    double rmin = 8*AU;
-    double rmax = 10*AU;
+    double rmin = 7*AU;
+    double rmax = 8*AU;
     double phimin = -M_PI;
     double phimax = M_PI;
     double zmin = -0.5; //scaleheight
@@ -106,7 +110,7 @@ int main(int argc, char **argv) {
         printf("Starting loop\n");
         char filename[100];
         // save every 10th output
-        if ((i%10) == 0) {
+        if ((i%1) == 0) {
             sprintf(filename, "%s/particle%d.txt",inputs->outputdir,i);
         } else {
             strcpy(filename,"NULL");
@@ -121,7 +125,7 @@ int main(int argc, char **argv) {
                                  filename, resFilename, velFilename, crossFilename);
         // save to the allparts file
         allpartsf = fopen(allpartsFilename,"a");
-        fprintf(allpartsf, "%f\t%f\t%f\t%f\t%f\t%f\n",p->size,xs[i],ys[i],zs[i],p->x,p->y,p->z);
+        fprintf(allpartsf, "%f\t%f\t%f\t%f\t%f\t%f\n",xs[i],ys[i],zs[i],p->x,p->y,p->z);
         fclose(allpartsf);
         all_final[i] = final_status;
         free_Particle(p);

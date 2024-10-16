@@ -4,6 +4,12 @@
 
 #define PARTDENSITY 2.0 // g cm-3
 
+//TODO: incorporate with Jupiter outputs
+// Model **models = list of models within particle
+// then have Model *pickModel(particle) -> return correct model level given particle position
+// anywhere I have :          Model *model = particle->model
+// should be replaced with :  Model *model = pickModel(particle)
+
 typedef struct Particle {
     Model *model;
 

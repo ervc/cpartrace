@@ -1,10 +1,8 @@
-FARGODIR    /Users/ericvc/fargo/outputs/alpha3_mplan100/
-OUTPUTDIR   outputs/alpha3_mplan100_testing_a1/
+FARGODIR    /Users/ericvc/fargo/outputs/alpha3_mplan300/
+OUTPUTDIR   outputs/alpha3_mplan300_a1/
 NOUT        50
-
 T0          0
 TF          3.15e11
 PARTSIZE    1.0
-NPARTS      100
-
-DIFFUSION   TRUE
+NPARTS      10
+DIFFUSION   FALSE

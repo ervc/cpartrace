@@ -1,0 +1,13 @@
+FARGODIR    ../jupiter/fargolev0/
+OUTPUTDIR   outputs/jupiterlev0_s0.01/
+NOUT        0
+T0          0.0
+TF          3.15e11
+DTOUT       3.15e5
+PARTSIZE    0.01
+NPARTS      10
+DIFFUSION   FALSE
+RESIDENCETIMES   FALSE
+VELOCITIES  FALSE
+CROSSINGS   FALSE
+MODELTYPE   JUPITER

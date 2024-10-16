@@ -12,12 +12,18 @@ int main(int argc, char **argv) {
     char fargodir[100];
     char nout[5];
     char outfile[100];
+    char *help_message = (
+"USAGE: ./find_grain_velocities [grainsize fargodir nout [outfile]]\n\
+Note: this is all or nothing cannot provide only some values\n");
     if (argc==1) {
         // DEFAULTS
         s = 0.01;
         strcpy(fargodir,"/Users/ericvc/fargo/outputs/alpha3_mplan300");
         strcpy(nout,"avg");
         strcpy(outfile,"outputs/equilibrium_velocities.dat");
+    } else if ((argc==2) && (strcmp(argv[1],"-h")==0)) {
+            printf("%s",help_message);
+            return(EXIT_SUCCESS);
     } else if (argc>=4) {
         s = atof(argv[1]);
         strcpy(fargodir,argv[2]);
@@ -38,7 +44,7 @@ Note: this is all or nothing cannot provide only some values\n");
     size_t ny = NY;
     size_t nz = NZ;
 
-    Model *model = init_Model(fargodir,nout,nx,ny,nz);
+    Model *model = init_Model(FARGO_MODEL,fargodir,nout,nx,ny,nz);
 
     if ( solve_grid(model,outfile,s) != EXIT_SUCCESS) {
         printf("Not successful :(\n");
@@ -152,7 +158,7 @@ int py_get_equilibrium_velocity(
         double *vxout, double *vyout, double *vzout)
         {
     printf("fargodir: %s\n",fargodir);
-    Model *model = init_Model(fargodir,nout,NX,NY,NZ);
+    Model *model = init_Model(FARGO_MODEL,fargodir,nout,NX,NY,NZ);
 
     return get_equilibrium_velocity(model,x,y,z,s,vxout,vyout,vzout);
 }
@@ -306,7 +312,7 @@ int solve_grid(Model *model, char outfile[100], double s) {
 int py_solve_grid(char fargodir[100], char nout[5], char outfile[100],
     double s) {
         printf("fargodir: %s\n",fargodir);
-        Model *model = init_Model(fargodir,nout,NX,NY,NZ);
+        Model *model = init_Model(FARGO_MODEL,fargodir,nout,NX,NY,NZ);
 
         return solve_grid(model,outfile,s);
     }

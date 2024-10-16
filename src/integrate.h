@@ -267,6 +267,10 @@ double get_vdiffmag(Particle *particle, double Y[6]) {
 void dYdt(Particle *particle, double Y[6], double derivative[6]) {
     double x,y,z,vx,vy,vz;
     double phi,r,theta;
+    // TODO: Here
+    // if x,y,z are inside level 4: model = particle->model4
+    // elif x,y,z are inside level 3: model = particle->model3
+    // ...
     Model *model = particle->model;
 
     // get things we'll need from the particle
