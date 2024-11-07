@@ -92,7 +92,7 @@ Domain *init_Jupiter_Domain(char* fargodir, size_t nx, size_t ny, size_t nz) {
     // read in the domain files, no ghost cells or rescaling
     read_domfile(domain->phiEdges,domain->phiCenters,nx,xfile,0,0);
     read_domfile(domain->rEdges,domain->rCenters,ny,yfile,0,0);
-    read_domfile(domain->thetaEdges,domain->thetaCenters,nz,zfile,3,0);
+    read_domfile(domain->thetaEdges,domain->thetaCenters,nz,zfile,0,0);
 
     // create_grids(domain);
 

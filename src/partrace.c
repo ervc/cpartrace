@@ -6,6 +6,7 @@
 #define NX 680
 #define NY 215
 #define NZ 20
+#define NLVL 5
 
 int main(int argc, char **argv) {
     printf("*** CPARTRACE VERSION %s ***\n",VERSION);
@@ -38,10 +39,25 @@ int main(int argc, char **argv) {
     
     // make the model
     printf("making Model...\n");
-    Model *model = init_Model(inputs->modeltype,inputs->fargodir,inputs->nout,nx,ny,nz);
-    printf("Model initialized!\n");
-
-    printf("R range: %e, %e au\n",model->domain->rCenters[0]/AU,model->domain->rCenters[model->ny-1]/AU);
+    Model *models[NLVL];
+    int nlvl = NLVL;
+    if (inputs->modeltype==JUPITER_MODEL) {
+        nlvl = NLVL;
+        size_t nxs[NLVL] = {680, 120, 120, 120, 120};
+        size_t nys[NLVL] = {215, 120, 120, 120, 120};
+        size_t nzs[NLVL] = {20, 34, 62, 86, 86};
+        for (int i=0; i<NLVL; i++) {
+            char leveldir[100];
+            sprintf(leveldir,"%s/fargolev%d/",inputs->fargodir,i);
+            models[i] = init_Model(inputs->modeltype,leveldir,"0",nxs[i],nys[i],nzs[i]);
+        }
+        // default model level0
+        printf("Models initialized\n");
+    } else {
+        nlvl = 1;
+        models[0] = init_Model(inputs->modeltype,inputs->fargodir,inputs->nout,nx,ny,nz);
+        printf("Model initialized!\n");
+    }
 
     // seed the random number generator
     srand(time(NULL));
@@ -53,12 +69,12 @@ int main(int argc, char **argv) {
     double xs[np];
     double ys[np];
     double zs[np];
-    double rmin = 7*AU;
-    double rmax = 8*AU;
-    double phimin = -M_PI;
-    double phimax = M_PI;
-    double zmin = -0.5; //scaleheight
-    double zmax =  0.5; //scaleheight
+    double rmin = 4.2*AU;
+    double rmax = 6.2*AU;
+    double phimin = -1.*M_PI/4.;
+    double phimax =  1.*M_PI/4.;
+    double zmin = -1.0; //scaleheight
+    double zmax =  1.0; //scaleheight
     for (int i=0; i<np; i++) {
         sizes[i] = size0; // /( (double)pow(10.0,i) );
         double phi = random_range(phimin,phimax);
@@ -119,7 +135,7 @@ int main(int argc, char **argv) {
         if (strcmp(filename,"NULL") != 0) {
             printf("Saving output to %s\n",filename);
         }
-        Particle *p = init_Particle(model, sizes[i], xs[i], ys[i], zs[i]);
+        Particle *p = init_Particle(models, nlvl, sizes[i], xs[i], ys[i], zs[i]);
         printf("Integrating...\n");
         final_status = integrate(p, t0, tf, dtout, inputs->diffusion,
                                  filename, resFilename, velFilename, crossFilename);
@@ -138,7 +154,7 @@ int main(int argc, char **argv) {
     printf("\n");
 
     free_Inputs(inputs);
-    free_Model(model);
+    free_Models(models, nlvl);
     return 0;
 }
 

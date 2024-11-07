@@ -251,6 +251,13 @@ void free_Model(Model *model) {
     free (model);
 }
 
+void free_Models(Model **models, int nlvl) {
+    for (int i=0; i<nlvl; i++) {
+        free_Model(models[i]);
+    }
+    // free (models);
+}
+
 void make_cartvels(Model *model, MeshField *gasvphi, MeshField *gasvr, MeshField *gasvtheta) {
     // printf("Making cartesian velocity grids\n");
     // pull out some useful values

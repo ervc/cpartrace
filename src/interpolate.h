@@ -89,7 +89,7 @@ double fast_linterp(Model *model, int which, int i, size_t j, size_t k,
  * @param theta 
  * @param corner 
  */
-void get_corner(Model *model, double phi, double r, double theta, size_t *corner) {
+int get_corner(Model *model, double phi, double r, double theta, size_t *corner) {
     Domain *domain = model->domain;
     size_t i=0;
     size_t j=0;
@@ -97,13 +97,13 @@ void get_corner(Model *model, double phi, double r, double theta, size_t *corner
 
     if ((r < domain->rCenters[0]) || (r > domain->rCenters[model->ny-1])) {
         printf("r = %e, r bounds = (%e, %e)\n",r,domain->rCenters[0],domain->rCenters[model->ny-1]);
-        perror("r outside of range!");
-        exit(1);
+        perror("r outside of range! this is being called\n");
+        return 1;
     }
     if ((theta < domain->thetaCenters[0]) || (theta > domain->thetaCenters[model->nz-1])) {
         printf("Theta = %f, theta bounds = (%f, %f)\n",theta,domain->thetaCenters[0],domain->thetaCenters[model->nz-1]);
         perror("theta outside of range!");
-        exit(1);
+        return 1;
     }
 
     // if phi is less than phiCenters[0] then it is between phi[-1] and phi[0]
@@ -135,6 +135,7 @@ void get_corner(Model *model, double phi, double r, double theta, size_t *corner
     k--;
 
     corner[0]=i; corner[1]=j; corner[2]=k;
+    return 0;
 }
 
 /**

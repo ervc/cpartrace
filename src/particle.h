@@ -11,7 +11,10 @@
 // should be replaced with :  Model *model = pickModel(particle)
 
 typedef struct Particle {
-    Model *model;
+    Model **models; // list of all models
+    Model *model;   // current model
+    int lvl;        // current level
+    int nlvl;       // total number of levels
 
     double size;
     double density;
@@ -34,10 +37,13 @@ void set_initialVelocity(Particle *particle);
 void get_posvelVector(Particle *part, double Y[6]);
 void print_vector(char* prefix, double Y[6]);
 
-Particle *init_Particle(Model *model, double size, double x, double y, double z) {
+Particle *init_Particle(Model **models, int nlvl, double size, double x, double y, double z) {
     Particle *particle = (Particle*)malloc(sizeof(*particle));
 
-    particle->model = model;
+    particle->models = models;
+    particle->lvl = 0;
+    particle->model = models[0];
+    particle->nlvl = nlvl;
     particle->size = size;
     particle->density = PARTDENSITY;
     particle->x = x;
@@ -148,6 +154,81 @@ void get_posvelVector(Particle *part, double Y[6]) {
     Y[5] = part->vz;
 }
 
+/// @brief Check if position Y is in bounds of model
+/// @param model 
+/// @param Y 
+/// @return 
+int check_bounds(Model *model, double Y[6]) {
+    double x = Y[0];
+    double y = Y[1];
+    double z = Y[2];
+    double r = sqrt(x*x + y*y + z*z);
+    double phi = atan2(y,x);
+    double theta = acos(z/r);
+    int phibound = 0;
+    int rbound = 0;
+    int thetabound = 0;
+    Domain *domain = model->domain;
+    if ((phi>domain->phiCenters[0]) & (phi<domain->phiCenters[domain->nx-1])) {
+        phibound = 1;
+    } 
+    if ((r>domain->rCenters[0]) & (r<domain->rCenters[domain->ny-1])) {
+        rbound = 1;
+    }
+    // theta a little different because only half disk
+    if ((theta>domain->thetaCenters[0]) & (theta<(M_PI-domain->thetaCenters[0]))) {
+        thetabound = 1;
+    }
+    return (phibound & rbound & thetabound);
+}
+
+Model *pick_model(Particle *part, double Y[6]) {
+    int i = part->nlvl - 1;
+    while (i > 0) {
+        if (check_bounds(part->models[i],Y)) {
+            break;
+        }
+        i--;
+    }
+    return part->models[i];
+}
+
+void update_Model(Particle *part) {
+    int i = part->nlvl - 1;
+    double x = part->x;
+    double y = part->y;
+    double z = part->z;
+    double r = sqrt(x*x + y*y + z*z);
+    double phi = atan2(y,x);
+    double theta = acos(z/r);
+    int rbound, phibound, thetabound;
+    Model *model;
+    Domain *domain;
+    while (i > 0) {
+        model = part->models[i];
+        domain = model->domain;
+        phibound   = 0;
+        rbound     = 0;
+        thetabound = 0;
+        if ((phi>domain->phiCenters[0]) & (phi<domain->phiCenters[domain->nx-1])) {
+            phibound = 1;
+        } 
+        if ((r>domain->rCenters[0]) & (r<domain->rCenters[domain->ny-1])) {
+            rbound = 1;
+        }
+        // theta a little different because only half disk
+        if ((theta>domain->thetaCenters[0]) & (theta<(M_PI-domain->thetaCenters[0]))) {
+            thetabound = 1;
+        }
+        if ((phibound) & (rbound) & (thetabound)) {
+            break;
+        }
+        i--;
+    }
+    part->model = part->models[i];
+    part->lvl = i;
+}
+
 void update_Particle(Particle *part, double Y[6]) {
     part->x = Y[0];
     part->y = Y[1];
@@ -155,6 +236,7 @@ void update_Particle(Particle *part, double Y[6]) {
     part->vx = Y[3];
     part->vy = Y[4];
     part->vz = Y[5];
+    update_Model(part);
 }
 
 void print_vector(char* prefix, double Y[6]) {
