@@ -1,6 +1,8 @@
 import numpy as np
 import numpy.typing as npt
 
+EXTEND=True
+
 class InterpolationError(Warning):
     pass
 class OutOfBoundsError(Warning):
@@ -28,7 +30,10 @@ def interp3d(arr: npt.NDArray, domain: tuple[npt.NDArray,...], coords: tuple[flo
     if (r<rcenters[0] or r>rcenters[-1]):
         raise OutOfBoundsError("R is out of bounds on interpolation")
     if theta < thetacenters[0]:
-        raise OutOfBoundsError("Theta is out of bounds")
+        if EXTEND:
+            print(f"Warning, theta out of bounds, extending from min(theta)")
+        else:
+            raise OutOfBoundsError(f"Theta is out of bounds\nTheta={theta}, mintheta={thetacenters[0]}")
     
     if phi < phicenters[0]:
         i = nx-1
@@ -89,6 +94,7 @@ def interp3d(arr: npt.NDArray, domain: tuple[npt.NDArray,...], coords: tuple[flo
         return c0*(1-zd)+c1*zd
     else:
         # 2d midplane interpolation
+        if k==-1: k=0
         c00 = arr[k,j ,i ]
         c10 = arr[k,j ,ip]
         c01 = arr[k,jp,i ]
