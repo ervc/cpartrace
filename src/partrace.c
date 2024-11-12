@@ -49,12 +49,12 @@ int main(int argc, char **argv) {
     double xs[np];
     double ys[np];
     double zs[np];
-    double rmin = 8*AU;
-    double rmax = 10*AU;
-    double phimin = -M_PI;
-    double phimax = M_PI;
-    double zmin = -0.5; //scaleheight
-    double zmax =  0.5; //scaleheight
+    double rmin = 5.2*AU;
+    double rmax = 5.2*AU;
+    double phimin = 0.0;
+    double phimax = 0.0;
+    double zmin = -0.0; //scaleheight
+    double zmax = 0.0; //scaleheight
     for (int i=0; i<np; i++) {
         sizes[i] = size0; // /( (double)pow(10.0,i) );
         double phi = random_range(phimin,phimax);
@@ -106,7 +106,7 @@ int main(int argc, char **argv) {
         printf("Starting loop\n");
         char filename[100];
         // save every 10th output
-        if ((i%10) == 0) {
+        if ((i%1) == 0) {
             sprintf(filename, "%s/particle%d.txt",inputs->outputdir,i);
         } else {
             strcpy(filename,"NULL");
@@ -121,7 +121,7 @@ int main(int argc, char **argv) {
                                  filename, resFilename, velFilename, crossFilename);
         // save to the allparts file
         allpartsf = fopen(allpartsFilename,"a");
-        fprintf(allpartsf, "%f\t%f\t%f\t%f\t%f\t%f\n",p->size,xs[i],ys[i],zs[i],p->x,p->y,p->z);
+        fprintf(allpartsf, "%f\t%f\t%f\t%f\t%f\t%f\n",xs[i],ys[i],zs[i],p->x,p->y,p->z);
         fclose(allpartsf);
         all_final[i] = final_status;
         free_Particle(p);

@@ -4,6 +4,8 @@ import numpy.typing as npt
 from . import constants as const
 from .interpolation import interp3d
 
+from .partrace import ModelParams
+
 class Model():
     def __init__(self, fargodir: str, nout: str|int):
         self.fargodir = fargodir
@@ -12,6 +14,11 @@ class Model():
         self.read_domain()
 
         ### TODO: read in model params
+
+    @classmethod
+    def from_partracedir(cls, directory: str):
+        params = ModelParams(directory)
+        return cls(params['fargodir'],params['nout'])
 
     def get_omega(self, x: float, y: float, z: float) -> float:
         r = np.sqrt(x*x + y*y + z*z)
@@ -103,6 +110,11 @@ class Model():
         rhogrid = self.get_rhogrid()
         domain = (self.phi_centers, self.r_centers, self.theta_centers)
         return interp3d(rhogrid, domain, (x,y,z))
+    
+    def get_Stokes(self, x: float, y: float, z: float, s: float, rho_s: float=2.0) -> float:
+        rho = self.get_rho(x,y,z)
+        cs = self.get_soundspeed(x,y,z)
+        return rho_s*s/rho/cs * self.get_omega(x,y,z)
     
     def get_spherevelgrid(self) -> list[npt.NDArray]:
         gasvphi = self.read_state('gasvx')

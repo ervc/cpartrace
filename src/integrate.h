@@ -337,20 +337,6 @@ void dYdt(Particle *particle, double Y[6], double derivative[6]) {
     double invSt2 = 1./(1.+St*St);
     double partdiff = gasdiff*invSt2;
 
-    if (St < COUPLING) {
-        // if stokes number is low then the particle is perfectly coupled with the gas
-        // set the v_eff as gas velocity
-        // We will also change the particle velocity in the update step
-        derivative[0] = gasvx;
-        derivative[1] = gasvy;
-        if (zflag) {gasvz = -gasvz;}
-        derivative[2] = gasvz;
-        derivative[3] = 0;
-        derivative[4] = 0;
-        derivative[5] = 0;
-        return;
-    }
-
     // derivatives
 
     // chain rules
@@ -385,6 +371,24 @@ void dYdt(Particle *particle, double Y[6], double derivative[6]) {
     double dpartdiffdx = invSt2*dgasdiffdx - 2.*gasdiff*invSt2*invSt2*dStdx;
     double dpartdiffdy = invSt2*dgasdiffdy - 2.*gasdiff*invSt2*invSt2*dStdy;
     double dpartdiffdz = invSt2*dgasdiffdz - 2.*gasdiff*invSt2*invSt2*dStdz;
+
+    if (St < COUPLING) {
+        // if stokes number is low then the particle is perfectly coupled with the gas
+        // set the v_eff as gas velocity
+        // We will also change the particle velocity in the update step
+        derivative[0] = gasvx + partdiff/rho_g*drhodx + dpartdiffdx;
+        derivative[1] = gasvy + partdiff/rho_g*drhody + dpartdiffdy;
+        double veffz = gasvz + partdiff/rho_g*drhodz + dpartdiffdz;
+        if (zflag) {
+            derivative[2] = -veffz;
+        } else {
+            derivative[2] = veffz;
+        }
+        derivative[3] = 0;
+        derivative[4] = 0;
+        derivative[5] = 0;
+        return;
+    }
 
     // Veff = V + D/rho_g grad(rho) + grad(D)
     double veffx = vx + partdiff/rho_g*drhodx + dpartdiffdx;
@@ -492,30 +496,13 @@ void rkstep_particle(Particle *particle, double dt, int DIFFUSION) {
     double result[6];
     rk4(particle, dt, result);
     double St = get_Stokes(particle);
-    if (St < COUPLING) {
-        double gasvx, gasvy, gasvz;
-        double x,y,z,phi,r,theta;
-        x = result[0];
-        y = result[1];
-        z = result[2];
-        // interp for the gas velocities to give the particle
-        // trilinterp_one function checks for -z so we don't have to
-        phi = atan2(y,x);
-        r = sqrt(x*x + y*y + z*z);
-        theta = acos(z/r);
-        gasvx = trilinterp_one(particle->model, VX, phi,r,theta);
-        gasvy = trilinterp_one(particle->model, VY, phi,r,theta);
-        gasvz = trilinterp_one(particle->model, VZ, phi,r,theta);
-        result[3] = gasvx;
-        result[4] = gasvy;
-        result[5] = gasvz;
-    }
+    
     if (DIFFUSION) {
         double gradpartdiff[3];
         double Y[6];
         get_posvelVector(particle, Y);
         // note that vdiff = grad D
-        get_vdiff(particle, Y, gradpartdiff);
+        get_vdiff(particle, result, gradpartdiff);
         double x,y,z;
         x = particle->x;
         y = particle->y;
@@ -536,6 +523,24 @@ void rkstep_particle(Particle *particle, double dt, int DIFFUSION) {
         result[0] += Rx*randkick;
         result[1] += Ry*randkick;
         result[2] += Rz*randkick;
+    }
+    if (St < COUPLING) {
+        double gasvx, gasvy, gasvz;
+        double x,y,z,phi,r,theta;
+        x = result[0];
+        y = result[1];
+        z = result[2];
+        // interp for the gas velocities to give the particle
+        // trilinterp_one function checks for -z so we don't have to
+        phi = atan2(y,x);
+        r = sqrt(x*x + y*y + z*z);
+        theta = acos(z/r);
+        gasvx = trilinterp_one(particle->model, VX, phi,r,theta);
+        gasvy = trilinterp_one(particle->model, VY, phi,r,theta);
+        gasvz = trilinterp_one(particle->model, VZ, phi,r,theta);
+        result[3] = 0; //gasvx;
+        result[4] = 0; //gasvy;
+        result[5] = gasvz;
     }
     update_Particle(particle, result);
 }
@@ -687,7 +692,7 @@ int integrate(Particle *particle, double t0, double tf, double dtout, int DIFFUS
         double r = sqrt(x*x + y*y + z*z);
         double theta = acos(z/r);
         // check inbounds
-        if ((theta < domain->thetaCenters[1]) || (theta > M_PI-domain->thetaCenters[1])) {
+        if ((theta < domain->thetaCenters[0]) || (theta > M_PI-domain->thetaCenters[0])) {
             status = OOB;
         }
         if ((r < domain->rCenters[1]) || (r > domain->rCenters[domain->ny-2])) {
