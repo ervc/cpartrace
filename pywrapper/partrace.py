@@ -54,7 +54,7 @@ class ParticleOutput:
         params = ModelParams(outputdir)
         t0: float = params["t0"]
         tf: float = params["tf"]
-        dtout: float = 1*const.YR # params["dtout"]
+        dtout: float = params["dtout"]
         nt: int = int( (tf-t0)/dtout )+1+1 #plus one just in case
         self.fname = outputdir+f'/particle{partnumber}.txt'
         self.x = np.ones(nt)*np.nan
@@ -66,6 +66,34 @@ class ParticleOutput:
         self.times = np.ones(nt)*np.nan
 
         self.read_partfile()
+
+    def new_read_partfile(self) -> None:
+        ts = []
+        xs = []
+        ys = []
+        zs = []
+        vxs = []
+        vys = []
+        vzs = []
+        with open(self.fname,"r") as f:
+            for line in f:
+                if line=='': continue
+                t,x,y,z,vx,vy,vz = map(float,line.split())
+                ts.append(t)
+                xs.append(x)
+                ys.append(y)
+                zs.append(z)
+                vxs.append(vx)
+                vys.append(vy)
+                vzs.append(vz)
+        self.times = np.array(ts)
+        self.x = np.array(xs)
+        self.y = np.array(ys)
+        self.z = np.array(zs)
+        self.vx = np.array(vxs)
+        self.vy = np.array(vys)
+        self.vz = np.array(vzs)
+        return
 
     def read_partfile(self) -> None:
         with open(self.fname,"r") as f:
@@ -88,7 +116,7 @@ class ParticleArray:
         params = ModelParams(outputdir)
         t0: float = params["t0"]
         tf: float = params["tf"]
-        dtout: float = 1*const.YR # params["dtout"]
+        dtout: float = params["dtout"]
         nt: int = int( (tf-t0)/dtout )+1+1 #plus one for the initial positiona and an extra just in case
         self.outputdir = outputdir
         N_parts_: list[int] = [0]
@@ -109,6 +137,7 @@ class ParticleArray:
         self.vz = np.ones(shape)*np.nan
         self.times = np.ones(shape)*np.nan
         for i,n in enumerate(self.N_parts):
+            print(i,n,end='\r',flush=True)
             part = ParticleOutput(self.outputdir,n)
             self.x[i] = part.x
             self.y[i] = part.y
@@ -117,6 +146,7 @@ class ParticleArray:
             self.vy[i] = part.vy
             self.vz[i] = part.vz
             self.times[i] = part.times
+        print('Done reading in particles')
 
 
 
