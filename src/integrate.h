@@ -538,8 +538,8 @@ void rkstep_particle(Particle *particle, double dt, int DIFFUSION) {
         gasvx = trilinterp_one(particle->model, VX, phi,r,theta);
         gasvy = trilinterp_one(particle->model, VY, phi,r,theta);
         gasvz = trilinterp_one(particle->model, VZ, phi,r,theta);
-        result[3] = 0; //gasvx;
-        result[4] = 0; //gasvy;
+        result[3] = gasvx;
+        result[4] = gasvy;
         result[5] = gasvz;
     }
     update_Particle(particle, result);
