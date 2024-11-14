@@ -95,9 +95,12 @@ int main(int argc, char **argv) {
     char allpartsFilename[100];
     sprintf(allpartsFilename, "%s/allparts.txt",inputs->outputdir);
     FILE *allpartsf;
-    allpartsf = fopen(allpartsFilename,"a");
-    fprintf(allpartsf,"size\tx0\ty0\tz0\txf\tyf\tzf\n");
-    fclose(allpartsf);
+    // if the file doesn't exist yet, create it and write the header
+    if(!fileExists(allpartsFilename)) {
+        allpartsf = fopen(allpartsFilename,"w");
+        fprintf(allpartsf,"x0\ty0\tz0\txf\tyf\tzf\n");
+        fclose(allpartsf);
+    }
 
     // TODO: Parallelize this loop
     for (int i=0; i<np; i++) {

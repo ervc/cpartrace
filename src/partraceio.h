@@ -242,3 +242,12 @@ int makedir(const char *name) {
 
   return 0;
 }
+
+int fileExists(const char *fname) {
+    FILE *file;
+    if ((file=fopen(fname,"r"))) {
+        fclose(file);
+        return 1;
+    }
+    return 0;
+}
