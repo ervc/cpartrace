@@ -49,22 +49,20 @@ int main(int argc, char **argv) {
     double xs[np];
     double ys[np];
     double zs[np];
-    double rmin = 5.2*AU;
-    double rmax = 5.2*AU;
-    double phimin = 0.0;
-    double phimax = 0.0;
-    double zmin = -0.0; //scaleheight
-    double zmax = 0.0; //scaleheight
+    double rmin = inputs->rmin;
+    double rmax = inputs->rmax;
+    double phimin = inputs->phimin;
+    double phimax = inputs->phimax;
+    double thetamin = inputs->thetamin;
+    double thetamax = inputs->thetamax;
     for (int i=0; i<np; i++) {
-        sizes[i] = size0; // /( (double)pow(10.0,i) );
+        sizes[i] = size0;
         double phi = random_range(phimin,phimax);
         double r = random_range(rmin,rmax);
-        // if (r > 4.2*AU) {r+= 2.0*AU;}
-        // double r = rmin+ i*(rmax-rmin)/np;
-        double z = r*0.05*random_range(zmin,zmax);
-        xs[i] = r*cos(phi);
-        ys[i] = r*sin(phi);
-        zs[i] = z;
+        double theta = random_range(thetamin,thetamax);
+        xs[i] = r*cos(phi)*sin(theta);
+        ys[i] = r*sin(phi)*sin(theta);
+        zs[i] = r*cos(theta);
     }
 
     double t0 = inputs->t0;
@@ -105,8 +103,8 @@ int main(int argc, char **argv) {
     for (int i=0; i<np; i++) {
         printf("Starting loop\n");
         char filename[100];
-        // save every 10th output
-        if ((i%1) == 0) {
+        // save every dsave-th output
+        if ((i%inputs->dsave) == 0) {
             sprintf(filename, "%s/particle%d.txt",inputs->outputdir,i);
         } else {
             strcpy(filename,"NULL");

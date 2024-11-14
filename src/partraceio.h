@@ -24,8 +24,15 @@ typedef struct Inputs {
     double dtout;
     double partsize;
     double partdens;
+    double rmin;
+    double rmax;
+    double thetamin;
+    double thetamax;
+    double phimin;
+    double phimax;
 
     int nparts;
+    int dsave;
 
     int diffusion;
     int residenceTimes;
@@ -49,7 +56,14 @@ Inputs *init_Inputs() {
     in->dtout    = 1.0 * YR;
     in->partsize = 1.0; // cm
     in->partdens = PARTDENSITY;
+    in->rmin = 7.0 * AU;
+    in->rmax = 12.0 * AU;
+    in->thetamin = M_PI_2;
+    in->thetamax = M_PI_2;
+    in->phimin = -M_PI;
+    in->phimax = M_PI;
     in->nparts = 100;
+    in->dsave = 10;
     in->diffusion = 1;
     in->residenceTimes = 0;
     in->velocities = 0;
@@ -131,8 +145,22 @@ Inputs *read_inputs(const char* infile) {
             in->partsize = atof(val_s);
         } else if (strcmp(key,"PARTDENS") == 0) {
             in->partdens = atof(val_s);
+        } else if (strcmp(key,"RMIN") == 0) {
+            in->rmin = atof(val_s);
+        } else if (strcmp(key,"RMAX") == 0) {
+            in->rmax = atof(val_s);
+        } else if (strcmp(key,"THETAMIN") == 0) {
+            in->thetamin = atof(val_s);
+        } else if (strcmp(key,"THETAMAX") == 0) {
+            in->thetamax = atof(val_s);
+        } else if (strcmp(key,"PHIMIN") == 0) {
+            in->phimin = atof(val_s);
+        } else if (strcmp(key,"PHIMAX") == 0) {
+            in->phimax = atof(val_s);
         } else if (strcmp(key,"NPARTS") == 0) {
             in->nparts = atoi(val_s);
+        } else if (strcmp(key,"DSAVE") == 0) {
+            in->dsave = atoi(val_s);
         } else if (strcmp(key,"DIFFUSION") == 0) {
             in->diffusion = read_bool(val_s);
         } else if (strcmp(key,"RESIDENCETIMES") == 0) {
@@ -161,8 +189,15 @@ void fprintf_Inputs(FILE* fout, Inputs *in) {
     fprintf(fout,"  DTOUT    : %f\n",in->dtout);
     fprintf(fout,"  PARTSIZE : %f\n",in->partsize);
     fprintf(fout,"  PARTDENS : %f\n",in->partdens);
+    fprintf(fout,"  RMIN     : %f\n",in->rmin);
+    fprintf(fout,"  RMAX     : %f\n",in->rmax);
+    fprintf(fout,"  THETAMIN : %f\n",in->thetamin);
+    fprintf(fout,"  THETAMAX : %f\n",in->thetamax);
+    fprintf(fout,"  PHIMIN   : %f\n",in->phimin);
+    fprintf(fout,"  PHIMAX   : %f\n",in->phimax);
     fprintf(fout,"Integers: \n");
     fprintf(fout,"  NPARTS : %d\n",in->nparts);
+    fprintf(fout,"  DSAVE  : %d\n",in->dsave);
     fprintf(fout,"Booleans: \n");
     fprintf(fout,"  DIFFUSION      : %d\n",in->diffusion);
     fprintf(fout,"  RESIDENCETIMES : %d\n",in->residenceTimes);
