@@ -11,6 +11,11 @@
 // diffusion boolean
 // #define DIFFUSION   1
 
+typedef struct Intout {
+    int status;
+    double tf;
+} Intout;
+
 /**
  * @brief Returns a random double between 0.0 and 1.0
  * 
@@ -633,10 +638,12 @@ void heartbeat(double time, double tf) {
     fflush(stdout);
 }
 
-int integrate(Particle *particle, double t0, double tf, double dtout, int DIFFUSION,
+Intout integrate(Particle *particle, double t0, double tf, double dtout, int DIFFUSION,
         char* filename, char* resFilename, char* velFilename, char* crossFilename) {
     Model* model = particle->model;
     Domain* domain = model->domain;
+
+    Intout result;
 
     FILE *file;
     int track_trajectory = 0;
@@ -751,6 +758,8 @@ int integrate(Particle *particle, double t0, double tf, double dtout, int DIFFUS
         
     }
     write_ending(file, status);
+    result.tf = time;
+    result.status = status;
 
     if (track_resTimes) {
         FILE *resFile;
@@ -813,5 +822,5 @@ int integrate(Particle *particle, double t0, double tf, double dtout, int DIFFUS
         fclose(file);
     }
     
-    return status;
+    return result;
 }

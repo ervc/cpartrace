@@ -68,7 +68,9 @@ int main(int argc, char **argv) {
     double t0 = inputs->t0;
     double tf = inputs->tf;
     double dtout = inputs->dtout;
-    int final_status=0;
+    Intout result;
+    result.status = 0;
+    result.tf = 0.0;
     int all_final[np];
 
     char resFilename[100];
@@ -98,7 +100,7 @@ int main(int argc, char **argv) {
     // if the file doesn't exist yet, create it and write the header
     if(!fileExists(allpartsFilename)) {
         allpartsf = fopen(allpartsFilename,"w");
-        fprintf(allpartsf,"x0\ty0\tz0\txf\tyf\tzf\n");
+        fprintf(allpartsf,"tf\tx0\ty0\tz0\txf\tyf\tzf\tstatus\n");
         fclose(allpartsf);
     }
 
@@ -118,13 +120,13 @@ int main(int argc, char **argv) {
         }
         Particle *p = init_Particle(model, sizes[i], xs[i], ys[i], zs[i]);
         printf("Integrating...\n");
-        final_status = integrate(p, t0, tf, dtout, inputs->diffusion,
+        result = integrate(p, t0, tf, dtout, inputs->diffusion,
                                  filename, resFilename, velFilename, crossFilename);
         // save to the allparts file
         allpartsf = fopen(allpartsFilename,"a");
-        fprintf(allpartsf, "%f\t%f\t%f\t%f\t%f\t%f\n",xs[i],ys[i],zs[i],p->x,p->y,p->z);
+        fprintf(allpartsf, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\n",result.tf,xs[i],ys[i],zs[i],p->x,p->y,p->z,result.status);
         fclose(allpartsf);
-        all_final[i] = final_status;
+        all_final[i] = result.status;
         free_Particle(p);
     }
 

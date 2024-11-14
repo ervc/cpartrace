@@ -1,5 +1,5 @@
 FARGODIR    /Users/ericvc/fargo/outputs/alpha3_mplan0/
-OUTPUTDIR   outputs/alpha3_mplan0_zonlyold_a0.001/
+OUTPUTDIR   outputs/alpha3_mplan0_newdirectory_a0.001/
 NOUT        50
 T0          0
 TF          3.15576e12
