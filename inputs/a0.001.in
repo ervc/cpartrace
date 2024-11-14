@@ -1,10 +1,10 @@
-FARGODIR    /Users/ericvc/fargo/outputs/alpha3_mplan100/
-OUTPUTDIR   outputs/alpha3_mplan100_testing_a0.001/
+FARGODIR    /Users/ericvc/fargo/outputs/alpha3_mplan0/
+OUTPUTDIR   outputs/alpha3_mplan0_zonlyold_a0.001/
 NOUT        50
-
 T0          0
-TF          3.15e11
+TF          3.15576e12
+DTOUT       3.15576e8
 PARTSIZE    0.001
-NPARTS      100
-
+NPARTS      275
 DIFFUSION   TRUE
+RESIDENCETIMES  TRUE
