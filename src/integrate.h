@@ -692,10 +692,10 @@ int integrate(Particle *particle, double t0, double tf, double dtout, int DIFFUS
         double r = sqrt(x*x + y*y + z*z);
         double theta = acos(z/r);
         // check inbounds
-        if ((theta < domain->thetaCenters[0]) || (theta > M_PI-domain->thetaCenters[0])) {
+        if ((theta < domain->thetaEdges[1]) || (theta > M_PI-domain->thetaEdges[1])) {
             status = OOB;
         }
-        if ((r < domain->rCenters[1]) || (r > domain->rCenters[domain->ny-2])) {
+        if ((r < domain->rEdges[1]) || (r > domain->rEdges[domain->ny-1])) {
             status = OOB;
         }
         if (status == OOB) {
