@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
         char filename[100];
         // save every dsave-th output
         if ((i%inputs->dsave) == 0) {
-            sprintf(filename, "%s/particle%d.txt",inputs->outputdir,i);
+            sprintf(filename, "%s/particle%d.txt",inputs->outputdir,i+inputs->nstart);
         } else {
             strcpy(filename,"NULL");
         }

@@ -33,6 +33,7 @@ typedef struct Inputs {
 
     int nparts;
     int dsave;
+    int nstart;
 
     int diffusion;
     int residenceTimes;
@@ -64,6 +65,7 @@ Inputs *init_Inputs() {
     in->phimax = M_PI;
     in->nparts = 100;
     in->dsave = 10;
+    in->nstart = 0;
     in->diffusion = 1;
     in->residenceTimes = 0;
     in->velocities = 0;
@@ -161,6 +163,8 @@ Inputs *read_inputs(const char* infile) {
             in->nparts = atoi(val_s);
         } else if (strcmp(key,"DSAVE") == 0) {
             in->dsave = atoi(val_s);
+        } else if (strcmp(key,"NSTART") == 0) {
+            in->nstart = atoi(val_s);
         } else if (strcmp(key,"DIFFUSION") == 0) {
             in->diffusion = read_bool(val_s);
         } else if (strcmp(key,"RESIDENCETIMES") == 0) {
@@ -198,6 +202,7 @@ void fprintf_Inputs(FILE* fout, Inputs *in) {
     fprintf(fout,"Integers: \n");
     fprintf(fout,"  NPARTS : %d\n",in->nparts);
     fprintf(fout,"  DSAVE  : %d\n",in->dsave);
+    fprintf(fout,"  NSTART : %d\n",in->nstart);
     fprintf(fout,"Booleans: \n");
     fprintf(fout,"  DIFFUSION      : %d\n",in->diffusion);
     fprintf(fout,"  RESIDENCETIMES : %d\n",in->residenceTimes);
