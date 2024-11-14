@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
     char allpartsFilename[100];
     sprintf(allpartsFilename, "%s/allparts.txt",inputs->outputdir);
     FILE *allpartsf;
-    allpartsf = fopen(allpartsFilename,"w+");
+    allpartsf = fopen(allpartsFilename,"a");
     fprintf(allpartsf,"size\tx0\ty0\tz0\txf\tyf\tzf\n");
     fclose(allpartsf);
 
