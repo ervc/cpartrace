@@ -101,6 +101,12 @@ int main(int argc, char **argv) {
     char crossFilename[100];
     if (inputs->crossings) {
         sprintf(crossFilename, "%s/partCrossings.txt",inputs->outputdir);
+        // if reset option then write a blank file
+        if (inputs->reset) {
+            FILE *crossFile;
+            crossFile = fopen(crossFilename,'w');
+            fclose(crossFile);
+        }
     } else {
         strcpy(crossFilename,"NULL");
     }
@@ -108,8 +114,8 @@ int main(int argc, char **argv) {
     char allpartsFilename[100];
     sprintf(allpartsFilename, "%s/allparts.txt",inputs->outputdir);
     FILE *allpartsf;
-    // if the file doesn't exist yet, create it and write the header
-    if(!fileExists(allpartsFilename)) {
+    // if the file doesn't exist yet or reset is picked, create it and write the header
+    if(!fileExists(allpartsFilename) || inputs->reset) {
         allpartsf = fopen(allpartsFilename,"w");
         fprintf(allpartsf,"tf\tx0\ty0\tz0\txf\tyf\tzf\tstatus\n");
         fclose(allpartsf);
