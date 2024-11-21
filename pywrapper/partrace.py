@@ -5,6 +5,16 @@ import numpy.typing as npt
 
 from . import constants as const
 
+def grainLabel(grainsize: float) -> str:
+    if grainsize >= 1:
+        return f'{grainsize:.0f} cm'
+    elif grainsize >= 0.1:
+        return f'{grainsize*10:.0f} mm'
+    elif grainsize >= 1.e-4:
+        return f'{grainsize*1.e4:.0f} '+r'$\textmu$m'
+    else:
+        return f'{grainsize:.1e} cm'
+
 class ModelParams:
     def __init__(self,directory: str) -> None:
         """Wrapper for parameters for the partrace run
