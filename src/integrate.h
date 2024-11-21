@@ -769,15 +769,11 @@ Intout integrate(Particle *particle, double t0, double tf, double dtout, int DIF
         resFile = fopen(resFilename,"rb");
         double nparts = 1.0;
         if (resFile != NULL) {
-            printf("Reading residence times\n");
             double *old_resTimes = calloc(bigSize,sizeof(double));
 
-            printf("Allocated space for old restime\n");
             fread(&nparts, sizeof(double), 1, resFile);
-            printf("Read in number of particles\n");
             fread(old_resTimes, sizeof(double), bigSize, resFile);
             nparts++;
-            printf("Add old restimes to new restimes...\n");
             for (size_t i=0; i<bigSize; i++) {
                 resTimes[i] += old_resTimes[i];
             }

@@ -39,6 +39,7 @@ typedef struct Inputs {
     int residenceTimes;
     int velocities;
     int crossings;
+    int reset;
 } Inputs;
 
 Inputs *init_Inputs() {
@@ -70,6 +71,7 @@ Inputs *init_Inputs() {
     in->residenceTimes = 0;
     in->velocities = 0;
     in->crossings = 0;
+    in->reset = 0;
     return in;
 }
 
@@ -173,6 +175,8 @@ Inputs *read_inputs(const char* infile) {
             in->velocities = read_bool(val_s);
         } else if (strcmp(key,"CROSSINGS") == 0) {
             in->crossings = read_bool(val_s);
+        } else if (strcmp(key,"RESET") == 0) {
+            in->reset = read_bool(val_s);
         } else {
             printf("Ignoring unkown key in input: %s\nKeys must be all upper \
             case and separated from the value using white space and or tabs",key);
@@ -208,6 +212,7 @@ void fprintf_Inputs(FILE* fout, Inputs *in) {
     fprintf(fout,"  RESIDENCETIMES : %d\n",in->residenceTimes);
     fprintf(fout,"  VELOCITIES     : %d\n",in->velocities);
     fprintf(fout,"  CROSSINGS      : %d\n",in->crossings);
+    fprintf(fout,"  RESET          : %d\n",in->reset);
 }
 
 void print_Inputs(Inputs *in) {

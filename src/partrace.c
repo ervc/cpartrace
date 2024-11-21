@@ -76,6 +76,17 @@ int main(int argc, char **argv) {
     char resFilename[100];
     if (inputs->residenceTimes) {
         sprintf(resFilename, "%s/residenceTimes.dat",inputs->outputdir);
+        if (inputs->reset) {
+            printf("!!! Resetting Residence Times !!!\n");
+            FILE *resFile;
+            resFile = fopen(resFilename,"wb");
+            size_t bigSize = 2*model->nz*model->ny*model->nx;
+            double zero = 0;
+            for (int i=0; i<bigSize; i++) {
+                fwrite(&zero, sizeof(double), 1, resFile);
+            }
+            fclose(resFile);
+        }
     } else {
         strcpy(resFilename,"NULL");
     }
