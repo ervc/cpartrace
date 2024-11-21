@@ -82,7 +82,8 @@ int main(int argc, char **argv) {
             resFile = fopen(resFilename,"wb");
             size_t bigSize = 2*model->nz*model->ny*model->nx;
             double zero = 0;
-            for (int i=0; i<bigSize; i++) {
+            // bigSize+1 because we also include the number of particles as the first double
+            for (int i=0; i<bigSize+1; i++) {
                 fwrite(&zero, sizeof(double), 1, resFile);
             }
             fclose(resFile);
