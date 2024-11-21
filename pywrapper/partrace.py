@@ -11,7 +11,7 @@ def grainLabel(grainsize: float) -> str:
     elif grainsize >= 0.1:
         return f'{grainsize*10:.0f} mm'
     elif grainsize >= 1.e-4:
-        return f'{grainsize*1.e4:.0f} '+r'\textmu m'
+        return f'{grainsize*1.e4:.0f} '+r'$\mu$m'
     else:
         return f'{grainsize:.1e} cm'
 
