@@ -148,6 +148,54 @@ class ParticleArray:
             self.times[i] = part.times
         print('Done reading in particles')
 
+class AllParts():
+    def __init__(self,outputdir: str) -> None:
+        self.outputdir = outputdir
+        self.fname = outputdir+f'/allparts.txt'
+
+        self.read_allparts()
+
+    def read_allparts(self):
+        times = []
+        starts = []
+        ends = []
+        statuses = []
+        Ntot = 0
+        with open(self.fname,'r') as f:
+            for n,line in enumerate(f):
+                if n==0: continue # header
+                try:
+                    t,x0,y0,z0,x,y,z,status = line.split()
+                except ValueError:
+                    continue
+                times.append(float(t))
+                starts.append(list(map(float,(x0,y0,z0))))
+                ends.append(list(map(float,(x,y,z))))
+                statuses.append(int(status))
+                Ntot+=1
+        self.times = np.array(times)
+        self.starts = np.array(starts)
+        self.ends = np.array(ends)
+        self.statuses = np.array(statuses)
+        self.Ntot = Ntot
+
+    def get_oob_times(self):
+        oobtimes = []
+        for s,t in zip(self.statuses, self.times):
+            if s==2: oobtimes.append(t)
+        return np.array(oobtimes)
+                
+    def get_accretion_times(self):
+        acctimes = []
+        for s,t in zip(self.statuses, self.times):
+            if s==3: acctimes.append(t)
+        return np.array(acctimes)
+    
+    def get_cross_times(self):
+        crosstimes = []
+        for s,t in zip(self.statuses, self.times):
+            if s==4: crosstimes.append(t)
+        return np.array(crosstimes)
 
 
 def make_biggrid(smallarr: npt.NDArray, flip: str='') -> npt.NDArray:
@@ -244,7 +292,7 @@ class Crossings:
 
     from matplotlib.lines import Line2D
     from matplotlib.axes import Axes
-    def plot_cdf(self,ax: Axes, fraction=False, *args,**kwargs) -> Line2D:
+    def plot_cdf(self,ax: Axes, fraction=False, *args,**kwargs) -> list[Line2D]:
         """
         plot the (e)cdf of particles crossed as a function of time
         """
