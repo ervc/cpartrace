@@ -61,6 +61,44 @@ Domain *init_Domain(char* fargodir, size_t nx, size_t ny, size_t nz) {
     return domain;
 }
 
+Domain *init_Jupiter_Domain(char* fargodir, size_t nx, size_t ny, size_t nz) {
+    Domain *domain = (Domain*)malloc(sizeof(*domain));
+    // string copy directory
+    snprintf(domain->fargodir,100,"%s",fargodir);
+    domain->nx = nx;
+    domain->ny = ny;
+    domain->nz = nz;
+
+    char xfile[100];
+    char yfile[100];
+    char zfile[100];
+    int cx;
+    cx = snprintf(xfile,100,"%s/domain_x.dat",fargodir);
+    cx = snprintf(yfile,100,"%s/domain_y.dat",fargodir);
+    cx = snprintf(zfile,100,"%s/domain_z.dat",fargodir);
+    if (cx>100) {
+        perror("Fargodir is too long!");
+        exit(1);
+    }
+
+    // allocate memory for domain arrays
+    domain->phiCenters = (double*)malloc(sizeof(double)*nx);
+    domain->rCenters = (double*)malloc(sizeof(double)*ny);
+    domain->thetaCenters = (double*)malloc(sizeof(double)*nz);
+    domain->phiEdges = (double*)malloc(sizeof(double)*(nx+1));
+    domain->rEdges = (double*)malloc(sizeof(double)*(ny+1));
+    domain->thetaEdges = (double*)malloc(sizeof(double)*(nz+1));
+
+    // read in the domain files, no ghost cells or rescaling
+    read_domfile(domain->phiEdges,domain->phiCenters,nx,xfile,0,0);
+    read_domfile(domain->rEdges,domain->rCenters,ny,yfile,0,0);
+    read_domfile(domain->thetaEdges,domain->thetaCenters,nz,zfile,0,0);
+
+    // create_grids(domain);
+
+    return domain;
+}
+
 void free_Domain(Domain *domain) {
     free (domain->phiCenters);
     free (domain->rCenters);

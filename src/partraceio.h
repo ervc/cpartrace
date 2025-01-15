@@ -34,6 +34,7 @@ typedef struct Inputs {
     int nparts;
     int dsave;
     int nstart;
+    int modeltype;
 
     int diffusion;
     int residenceTimes;
@@ -67,6 +68,7 @@ Inputs *init_Inputs() {
     in->nparts = 100;
     in->dsave = 10;
     in->nstart = 0;
+    in->modeltype = FARGO_MODEL;
     in->diffusion = 1;
     in->residenceTimes = 0;
     in->velocities = 0;
@@ -102,6 +104,17 @@ int read_bool(const char *bin) {
     }
     printf("Cannot parse boolean: %s\n",bin);
     exit(1);
+}
+
+int read_modeltype(const char *cin) {
+    if (strcmp(cin,"FARGO")==0) {
+        return FARGO_MODEL;
+    } else if (strcmp(cin,"JUPITER")==0) {
+        return JUPITER_MODEL;
+    } else {
+        printf("Cannot parse modeltyp: %s\n",cin);
+        exit(1);
+    }
 }
 
 Inputs *read_inputs(const char* infile) {
@@ -163,6 +176,8 @@ Inputs *read_inputs(const char* infile) {
             in->phimax = atof(val_s);
         } else if (strcmp(key,"NPARTS") == 0) {
             in->nparts = atoi(val_s);
+        } else if (strcmp(key,"MODELTYPE") == 0) {
+            in->modeltype = read_modeltype(val_s);
         } else if (strcmp(key,"DSAVE") == 0) {
             in->dsave = atoi(val_s);
         } else if (strcmp(key,"NSTART") == 0) {
@@ -205,6 +220,7 @@ void fprintf_Inputs(FILE* fout, Inputs *in) {
     fprintf(fout,"  PHIMAX   : %f\n",in->phimax);
     fprintf(fout,"Integers: \n");
     fprintf(fout,"  NPARTS : %d\n",in->nparts);
+    fprintf(fout,"  MODELTYPE : %d\n",in->modeltype);
     fprintf(fout,"  DSAVE  : %d\n",in->dsave);
     fprintf(fout,"  NSTART : %d\n",in->nstart);
     fprintf(fout,"Booleans: \n");

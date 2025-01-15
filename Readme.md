@@ -10,6 +10,11 @@ Main module in `partrace.c` and `partrace.h`, functions are kept in `src/` file.
 
 ## TODO:
 
+- [ ] Integration with Jupiter outputs
+  - [x] read in Jupiter output from modified Jupiter files
+  - [ ] have multiple models for each particle
+  - [ ] correctly pick which model to look at
+
 - [ ] Input files and reading in information
   - [x] Put alpha, aspect ratio, flaring angle, omegaframe, in the Model struct
   - [x] Put the planet mass, location, and sun location in the model
@@ -33,15 +38,6 @@ Main module in `partrace.c` and `partrace.h`, functions are kept in `src/` file.
 - [ ] Collisions
   - [ ] barnes hut tree
   - [ ] r* tree
-
-- [x] Integration
-  - [x] Really fast!
-  - [x] Full dt calculation
-  - [x] Implement full coupling with gas before testing small particles
-  - [x] Include diffusion
-    - See bug about downward diffusion
-  - [ ] Sometimes Fails after 8300 years. Sometime fails in the middle of writing to the file, which is weird...
-    - This has not happened since the initial tests... Keep an eye out though
 
 ### Completed tasks
 - Tests with rebound

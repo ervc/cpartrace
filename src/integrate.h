@@ -40,7 +40,7 @@ double random_range(double a, double b) {
 void get_gradrho(Particle *particle, double Y[6], double gradrho[3]) {
     double x,y,z;
     double phi,r,theta;
-    Model *model = particle->model;
+    Model *model = pick_model(particle, Y);
 
     // get things we'll need from the particle
     x = Y[0];
@@ -74,7 +74,15 @@ void get_gradrho(Particle *particle, double Y[6], double gradrho[3]) {
         size_t corner[3];
         size_t i,j,k;
         // these values don't change so let's just find them once
-        get_corner(model,phi,r,theta,corner);
+        // if anything is out of bounds try looking one layer up to integrate
+        if (get_corner(model,phi,r,theta,corner)==1) {
+            if (particle->nlvl>0) {
+                model = particle->models[particle->nlvl-1];
+            }
+            if (get_corner(model,phi,r,theta,corner)==1) {
+                exit(1);
+            }
+        }
         i=corner[0]; j=corner[1]; k=corner[2];
         drhodx = fast_linterp(model, DRHODX, i,j,k, phi, r, theta);
         drhody = fast_linterp(model, DRHODY, i,j,k, phi, r, theta);
@@ -87,7 +95,7 @@ void get_gradrho(Particle *particle, double Y[6], double gradrho[3]) {
 void get_vrho(Particle *particle, double Y[6], double vrho[3]) {
     double x,y,z;
     double phi,r,theta;
-    Model *model = particle->model;
+    Model *model = pick_model(particle,Y);
 
     // get things we'll need from the particle
     x = Y[0];
@@ -115,7 +123,15 @@ void get_vrho(Particle *particle, double Y[6], double vrho[3]) {
         size_t corner[3];
         size_t i,j,k;
         // these values don't change so let's just find them once
-        get_corner(model,phi,r,theta,corner);
+        // if anything is out of bounds try looking one layer up to integrate
+        if (get_corner(model,phi,r,theta,corner)==1) {
+            if (particle->nlvl>0) {
+                model = particle->models[particle->nlvl-1];
+            }
+            if (get_corner(model,phi,r,theta,corner)==1) {
+                exit(1);
+            }
+        }
         i=corner[0]; j=corner[1]; k=corner[2];
         rho_g  = fast_linterp(model, RHO, i,j,k, phi, r, theta);
     }
@@ -158,7 +174,7 @@ double get_vrhomag(Particle *particle, double Y[6]) {
 void get_vdiff(Particle *particle, double Y[6], double vdiff[3]) {
     double x,y,z;
     double phi,r,theta;
-    Model *model = particle->model;
+    Model *model = pick_model(particle, Y);
 
     // get things we'll need from the particle
     x = Y[0];
@@ -198,7 +214,15 @@ void get_vdiff(Particle *particle, double Y[6], double vdiff[3]) {
         size_t corner[3];
         size_t i,j,k;
         // these values don't change so let's just find them once
-        get_corner(model,phi,r,theta,corner);
+        // if anything is out of bounds try looking one layer up to integrate
+        if (get_corner(model,phi,r,theta,corner)==1) {
+            if (particle->nlvl>0) {
+                model = particle->models[particle->nlvl-1];
+            }
+            if (get_corner(model,phi,r,theta,corner)==1) {
+                exit(1);
+            }
+        }
         i=corner[0]; j=corner[1]; k=corner[2];
         rho_g  = fast_linterp(model, RHO, i,j,k, phi, r, theta);
         drhodx = fast_linterp(model, DRHODX, i,j,k, phi, r, theta);
@@ -272,7 +296,11 @@ double get_vdiffmag(Particle *particle, double Y[6]) {
 void dYdt(Particle *particle, double Y[6], double derivative[6]) {
     double x,y,z,vx,vy,vz;
     double phi,r,theta;
-    Model *model = particle->model;
+    // TODO: Here
+    // if x,y,z are inside level 4: model = particle->model4
+    // elif x,y,z are inside level 3: model = particle->model3
+    // ...
+    Model *model = pick_model(particle, Y);
 
     // get things we'll need from the particle
     x = Y[0];
@@ -319,7 +347,15 @@ void dYdt(Particle *particle, double Y[6], double derivative[6]) {
         size_t corner[3];
         size_t i,j,k;
         // these values don't change so let's just find them once
-        get_corner(model,phi,r,theta,corner);
+        // if anything is out of bounds try looking one layer up to integrate
+        if (get_corner(model,phi,r,theta,corner)==1) {
+            if (particle->nlvl>0) {
+                model = particle->models[particle->nlvl-1];
+            }
+            if (get_corner(model,phi,r,theta,corner)==1) {
+                exit(1);
+            }
+        }
         i=corner[0]; j=corner[1]; k=corner[2];
         rho_g  = fast_linterp(model, RHO, i,j,k, phi, r, theta);
         gasvx  = fast_linterp(model, VX , i,j,k, phi, r, theta);
@@ -618,8 +654,8 @@ double max_dt(Particle *particle, double time, double tf, double tout) {
 
 void write_output(FILE* file, Particle *part, double time) {
     if (file==NULL) return;
-    fprintf(file, "%e\t%e\t%e\t%e\t%e\t%e\t%e\n",
-    time,part->x,part->y,part->z,part->vx,part->vy,part->vz);
+    fprintf(file, "%e\t%e\t%e\t%e\t%e\t%e\t%e\t%d\n",
+    time,part->x,part->y,part->z,part->vx,part->vy,part->vz,part->lvl);
 }
 
 void write_ending(FILE* file, int status) {

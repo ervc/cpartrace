@@ -3,13 +3,15 @@
 // #include "mlinterp.hpp"
 
 // defaults
-#define NX 2048
-#define NY 256
-#define NZ 32
+#define NX 680
+#define NY 215
+#define NZ 20
+#define NLVL 5
 
 int main(int argc, char **argv) {
     printf("*** CPARTRACE VERSION %s ***\n",VERSION);
     
+    // read inputs
     char infile[100];
     Inputs *inputs = init_Inputs();
     if (argc <=1 ) {
@@ -35,9 +37,27 @@ int main(int argc, char **argv) {
     const size_t ny = NY;
     const size_t nz = NZ;
     
+    // make the model
     printf("making Model...\n");
-    Model *model = init_Model(inputs->fargodir,inputs->nout,nx,ny,nz);
-    printf("Model initialized!\n");
+    Model *models[NLVL];
+    int nlvl = NLVL;
+    if (inputs->modeltype==JUPITER_MODEL) {
+        nlvl = NLVL;
+        size_t nxs[NLVL] = {680, 120, 120, 120, 120};
+        size_t nys[NLVL] = {215, 120, 120, 120, 120};
+        size_t nzs[NLVL] = {20, 34, 62, 86, 86};
+        for (int i=0; i<NLVL; i++) {
+            char leveldir[100];
+            sprintf(leveldir,"%s/fargolev%d/",inputs->fargodir,i);
+            models[i] = init_Model(inputs->modeltype,leveldir,"0",nxs[i],nys[i],nzs[i]);
+        }
+        // default model level0
+        printf("Models initialized\n");
+    } else {
+        nlvl = 1;
+        models[0] = init_Model(inputs->modeltype,inputs->fargodir,inputs->nout,nx,ny,nz);
+        printf("Model initialized!\n");
+    }
 
     // seed the random number generator
     srand(time(NULL));
@@ -136,7 +156,7 @@ int main(int argc, char **argv) {
         if (strcmp(filename,"NULL") != 0) {
             printf("Saving output to %s\n",filename);
         }
-        Particle *p = init_Particle(model, sizes[i], xs[i], ys[i], zs[i]);
+        Particle *p = init_Particle(models, nlvl, sizes[i], xs[i], ys[i], zs[i]);
         printf("Integrating...\n");
         result = integrate(p, t0, tf, dtout, inputs->diffusion,
                                  filename, resFilename, velFilename, crossFilename);
@@ -155,7 +175,7 @@ int main(int argc, char **argv) {
     printf("\n");
 
     free_Inputs(inputs);
-    free_Model(model);
+    free_Models(models, nlvl);
     return 0;
 }
 

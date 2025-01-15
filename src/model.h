@@ -6,6 +6,10 @@
 // #include "domain.h"
 
 
+// TODO: read in Jupiter outputs
+// Alternative: change Jupiter to fake fargo output
+// Not worrying about temp for now
+
 typedef struct Model {
     // a struct to hold info for the Many fields in a fargo model
     char fargodir[100];
@@ -52,8 +56,22 @@ void make_cartvels(Model *model, MeshField *gasvphi, MeshField *gasvr, MeshField
 void init_gradrho(Model *model);
 void get_planetVars(Variables *var, Model *model);
 double get_soundspeed(Model *model, double r);
+Model *init_fargo_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t nz);
+Model *init_Jupiter_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t nz);
 
-Model *init_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t nz) {
+Model *init_Model(int which, char* fargodir, char* nout, size_t nx, size_t ny, size_t nz) {
+    switch (which) {
+        case FARGO_MODEL:
+            return init_fargo_Model(fargodir, nout, nx, ny, nz);
+        case JUPITER_MODEL:
+            return init_Jupiter_Model(fargodir, nout, nx, ny, nz);
+        default:
+            printf("Assuming model input is from Fargo\n");
+            return init_fargo_Model(fargodir, nout, nx, ny, nz);
+    }
+}
+
+Model *init_fargo_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t nz) {
     // allocate memory
     Model *model = (Model*)malloc(sizeof(*model));
     if (!model) {
@@ -142,6 +160,76 @@ Model *init_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t nz) {
     return model;
 }
 
+Model *init_Jupiter_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t nz) {
+    Model *model = (Model*)malloc(sizeof(*model));
+    if (!model) {
+        perror("Malloc Failed on Model Creation");
+        exit(1);
+    }
+    // string copy the fargo directory
+    snprintf(model->fargodir,100,"%s",fargodir);
+    // store model params
+    strcpy(model->nout, nout);
+    model->nx = nx;
+    model->ny = ny;
+    model->nz = nz;
+    // read in the files
+    char rhofile[100];
+    char vxfile[100];
+    char vyfile[100];
+    char vzfile[100];
+    int cx;
+    cx = snprintf(rhofile,100,"%s/gasdens%s.dat",fargodir,nout);
+    cx = snprintf(vxfile,100,"%s/gasvx%s.dat",fargodir,nout);
+    cx = snprintf(vyfile,100,"%s/gasvy%s.dat",fargodir,nout);
+    cx = snprintf(vzfile,100,"%s/gasvz%s.dat",fargodir,nout);
+    if (cx>100) {
+        perror("Fargodir is too long!");
+        exit(1);
+    }
+    // make the MeshFields
+    // do not rescale any of the values
+    model->gasdens = init_MeshField_fromFile(rhofile,nx,ny,nz,0);
+    // read the vx, vy, and vz directly
+    model->gasvx   = init_MeshField_fromFile(vxfile,nx,ny,nz,0);
+    model->gasvy   = init_MeshField_fromFile(vyfile,nx,ny,nz,0);
+    model->gasvz   = init_MeshField_fromFile(vzfile,nx,ny,nz,0);
+
+    // initialize the domain
+    model->domain = init_Jupiter_Domain(fargodir,nx,ny,nz);
+
+    // get the gradients
+    init_gradrho(model);
+
+    // lets just fill these in for now
+    // TODO: read these in
+    model->alpha = 1.0e-3;
+    model->aspect = 0.05;
+    model->flaring = 0.25;
+    model->planetmass = 1.e-3 * MSUN;
+    model->omegaframe = 1/TIME;
+
+     // get the planet(s) position(s)
+    model->planetpos[0] = R0;
+    model->planetpos[1] = 0.0;
+    model->planetpos[2] = 0.0;
+
+    // CoM is at origin;
+    model->sunpos[0] = ( -model->planetpos[0] * model->planetmass/MSUN );
+    model->sunpos[1] = ( -model->planetpos[1] * model->planetmass/MSUN );
+    model->sunpos[2] = ( -model->planetpos[2] * model->planetmass/MSUN );
+
+    // semi major axis of planet
+    double sma = sqrt(model->planetpos[0]*model->planetpos[0] + model->planetpos[1]*model->planetpos[1]);
+    double hillRadius = sma * pow(model->planetmass/3/MSUN,1.0/3.0);
+    double soundspeed = get_soundspeed(model,sma);
+    double bondiRadius = 2*G*model->planetmass/soundspeed/soundspeed;
+    // planet enevlope is min(hillRadius/4, bondiRadius)
+    model->planetEnvelope = (hillRadius/4. < bondiRadius) ? hillRadius/4 : bondiRadius;
+
+    return model;
+}
+
 void free_Model(Model *model) {
     free_MeshField(model->gasdens);
     // free_MeshField(model->gasvphi);
@@ -161,6 +249,13 @@ void free_Model(Model *model) {
     // free_MeshField(model->cartZgrid);
 
     free (model);
+}
+
+void free_Models(Model **models, int nlvl) {
+    for (int i=0; i<nlvl; i++) {
+        free_Model(models[i]);
+    }
+    // free (models);
 }
 
 void make_cartvels(Model *model, MeshField *gasvphi, MeshField *gasvr, MeshField *gasvtheta) {
