@@ -132,7 +132,10 @@ void set_initialVelocity(Particle *particle) {
     double tstop = St/Om;
     // get non-rotating gas vphi at particle location
     double OMEGAFRAME = model->omegaframe;
-    double vphi_gas = trilinterp_one(model, RHO, phi, r, M_PI_2) + r*sin(theta)*OMEGAFRAME;
+    double vphi_gas; // = trilinterp_one(model, RHO, phi, r, M_PI_2) + r*sin(theta)*OMEGAFRAME;
+    double vx_gas = trilinterp_one(model, VX, phi, r, theta);
+    double vy_gas = trilinterp_one(model, VY, phi, r, theta);
+    vphi_gas = (x*vy_gas - y*vx_gas)/r + r*sin(theta)*OMEGAFRAME;
     double eta = 1.0-pow(vphi_gas/vkep,2.0);
     // from armitage notes eq (140)
     double vr = -eta/(St + 1.0/St) * vkep;
