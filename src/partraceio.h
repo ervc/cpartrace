@@ -111,6 +111,8 @@ int read_modeltype(const char *cin) {
         return FARGO_MODEL;
     } else if (strcmp(cin,"JUPITER")==0) {
         return JUPITER_MODEL;
+    } else if (strcmp(cin,"RADMC")==0) {
+        return RADMC_MODEL;
     } else {
         printf("Cannot parse modeltyp: %s\n",cin);
         exit(1);

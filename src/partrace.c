@@ -3,9 +3,9 @@
 // #include "mlinterp.hpp"
 
 // defaults
-#define NX 680
-#define NY 215
-#define NZ 20
+#define NX 512
+#define NY 256
+#define NZ 32
 #define NLVL 5
 
 int main(int argc, char **argv) {
@@ -95,6 +95,7 @@ int main(int argc, char **argv) {
 
     char resFilename[100];
     if (inputs->residenceTimes) {
+        Model* model = models[0];
         sprintf(resFilename, "%s/residenceTimes.dat",inputs->outputdir);
         if (inputs->reset) {
             printf("!!! Resetting Residence Times !!!\n");
@@ -125,7 +126,7 @@ int main(int argc, char **argv) {
         // if reset option then write a blank file
         if (inputs->reset) {
             FILE *crossFile;
-            crossFile = fopen(crossFilename,'w');
+            crossFile = fopen(crossFilename,"w");
             fclose(crossFile);
         }
     } else {

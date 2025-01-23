@@ -1,6 +1,7 @@
 #include <math.h>
 
 // Swithces for data
+#define ZERO   0
 #define RHO    1
 #define VPHI   2
 #define VR     3
@@ -26,3 +27,4 @@
 // Read in from FARGO or JUPITER output
 #define FARGO_MODEL   1
 #define JUPITER_MODEL 2
+#define RADMC_MODEL   3

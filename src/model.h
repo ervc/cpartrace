@@ -58,6 +58,7 @@ void get_planetVars(Variables *var, Model *model);
 double get_soundspeed(Model *model, double r);
 Model *init_fargo_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t nz);
 Model *init_Jupiter_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t nz);
+Model *init_RADMC_Model(char* fargodir, char*nout, size_t nx, size_t ny, size_t nz);
 
 Model *init_Model(int which, char* fargodir, char* nout, size_t nx, size_t ny, size_t nz) {
     switch (which) {
@@ -65,6 +66,8 @@ Model *init_Model(int which, char* fargodir, char* nout, size_t nx, size_t ny, s
             return init_fargo_Model(fargodir, nout, nx, ny, nz);
         case JUPITER_MODEL:
             return init_Jupiter_Model(fargodir, nout, nx, ny, nz);
+        case RADMC_MODEL:
+            return init_RADMC_Model(fargodir, nout, nx, ny, nz);
         default:
             printf("Assuming model input is from Fargo\n");
             return init_fargo_Model(fargodir, nout, nx, ny, nz);
@@ -230,6 +233,85 @@ Model *init_Jupiter_Model(char* fargodir, char* nout, size_t nx, size_t ny, size
     return model;
 }
 
+Model *init_RADMC_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t nz) {
+    Model *model = (Model*)malloc(sizeof(*model));
+    if (!model) {
+        perror("Malloc Failed on Model Creation");
+        exit(1);
+    }
+    // string copy the fargo directory
+    snprintf(model->fargodir,100,"%s",fargodir);
+    // store model params
+    strcpy(model->nout, nout);
+    model->nx = nx;
+    model->ny = ny;
+    model->nz = nz;
+    // read in the files
+    char rhofile[100];
+    char vphifile[100];
+    char vrfile[100];
+    char vthetafile[100];
+    char varfile[100];
+    int cx;
+    cx = snprintf(rhofile,100,"%s/gasdens%s.dat",fargodir,nout);
+    cx = snprintf(vphifile,100,"%s/gasvx%s.dat",fargodir,nout);
+    cx = snprintf(vrfile,100,"%s/gasvy%s.dat",fargodir,nout);
+    cx = snprintf(vthetafile,100,"%s/gasvz%s.dat",fargodir,nout);
+    cx = snprintf(varfile,100,"%s/variables.par",fargodir);
+    if (cx>100) {
+        perror("Fargodir is too long!");
+        exit(1);
+    }
+    // make the MeshFields
+    // do not rescale any of the values
+    model->gasdens = init_MeshField_fromFile(rhofile,nx,ny,nz,0);
+    MeshField *gasvphi   = init_MeshField_fromFile(vphifile,nx,ny,nz,0);
+    MeshField *gasvr     = init_MeshField_fromFile(vrfile,nx,ny,nz,0);
+    MeshField *gasvtheta = init_MeshField_fromFile(vthetafile,nx,ny,nz,0);
+
+    // initialize the domain
+    // reuse Jupiter domain because we have no ghost cells and no rescaling
+    model->domain = init_Jupiter_Domain(fargodir,nx,ny,nz);
+
+    // get the cartesian gas velocities
+    printf("Making cartvels...\n");
+    make_cartvels(model, gasvphi, gasvr, gasvtheta);
+
+    // get the gradients
+    init_gradrho(model);
+
+    printf("Getting variables...\n");
+    Variables *var = init_Variables_fromFile(varfile);
+    printf("Getting planet variables...\n");
+    get_planetVars(var,model);
+    // read the variables and rescale where necessary
+    model->alpha = get_value(var,"ALPHA");               // unitless
+    model->aspect = get_value(var,"ASPECTRATIO");        // unitless
+    model->flaring = get_value(var,"FLARINGINDEX");      // unitless
+    model->planetmass = get_value(var,"PLANETMASS");     // do not rescale
+    model->omegaframe = get_value(var,"PLANETROTFRAME"); // do not rescale
+
+    // get the planet(s) position(s)
+    model->planetpos[0] = get_value(var,"PLANX");
+    model->planetpos[1] = get_value(var,"PLANY");
+    model->planetpos[2] = get_value(var,"PLANZ");
+
+    // CoM is at origin;
+    model->sunpos[0] = ( -model->planetpos[0] * model->planetmass/MSUN );
+    model->sunpos[1] = ( -model->planetpos[1] * model->planetmass/MSUN );
+    model->sunpos[2] = ( -model->planetpos[2] * model->planetmass/MSUN );
+
+    // semi major axis of planet
+    double sma = sqrt(model->planetpos[0]*model->planetpos[0] + model->planetpos[1]*model->planetpos[1]);
+    double hillRadius = sma * pow(model->planetmass/3/MSUN,1.0/3.0);
+    double soundspeed = get_soundspeed(model,sma);
+    double bondiRadius = 2*G*model->planetmass/soundspeed/soundspeed;
+    // planet enevlope is min(hillRadius/4, bondiRadius)
+    model->planetEnvelope = (hillRadius/4. < bondiRadius) ? hillRadius/4 : bondiRadius;
+
+    return model;
+}
+
 void free_Model(Model *model) {
     free_MeshField(model->gasdens);
     // free_MeshField(model->gasvphi);
@@ -329,7 +411,7 @@ MeshField *get_mesh(Model *model, int which) {
     //     break;
     // case VTHETA:
     //     data_values = model->gasvtheta;
-        // break;
+    //     break;
     case VX:
         data_values = model->gasvx;
         break;
