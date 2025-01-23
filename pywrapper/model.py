@@ -57,10 +57,10 @@ class Model():
             self.fargodir+'/domain_x.dat', ghostcells=0, scale=1.
             )
         self.r_edges, self.r_centers = self.read_domfile(
-            self.fargodir+'/domain_y.dat', ghostcells=3, scale=const.LEN
+            self.fargodir+'/domain_y.dat', ghostcells=0, scale=1.
             )
         self.theta_edges, self.theta_centers = self.read_domfile(
-            self.fargodir+'/domain_z.dat', ghostcells=3, scale=1.
+            self.fargodir+'/domain_z.dat', ghostcells=0, scale=1.
             )
         self.nx = len(self.phi_centers)
         self.ny = len(self.r_centers)
@@ -144,3 +144,12 @@ class Model():
         gvy = interp3d(gasvy,domain,pos)
         gvz = interp3d(gasvz,domain,pos)
         return gvx,gvy,gvz
+    
+    def get_dusttempgrid(self) -> npt.NDArray:
+        return self.read_state('dusttemp')
+    
+    def get_dusttemp(self, x: float, y: float, z: float) -> float:
+        dusttemp = self.get_dusttempgrid()
+        domain = (self.phi_centers, self.r_centers, self.theta_centers)
+        pos = (x,y,z)
+        return interp3d(dusttemp, domain, pos)

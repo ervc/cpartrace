@@ -74,6 +74,7 @@ class ParticleOutput:
         self.vy = np.ones(nt)*np.nan
         self.vz = np.ones(nt)*np.nan
         self.times = np.ones(nt)*np.nan
+        self.lvls = np.ones(nt)*np.nan
 
         self.read_partfile()
 
@@ -85,10 +86,11 @@ class ParticleOutput:
         vxs = []
         vys = []
         vzs = []
+        lvls = []
         with open(self.fname,"r") as f:
             for line in f:
                 if line=='': continue
-                t,x,y,z,vx,vy,vz = map(float,line.split())
+                t,x,y,z,vx,vy,vz,lvl = map(float,line.split())
                 ts.append(t)
                 xs.append(x)
                 ys.append(y)
@@ -96,6 +98,7 @@ class ParticleOutput:
                 vxs.append(vx)
                 vys.append(vy)
                 vzs.append(vz)
+                lvls.append(lvl)
         self.times = np.array(ts)
         self.x = np.array(xs)
         self.y = np.array(ys)
@@ -103,6 +106,7 @@ class ParticleOutput:
         self.vx = np.array(vxs)
         self.vy = np.array(vys)
         self.vz = np.array(vzs)
+        self.lvl = np.array(lvls)
         return
 
     def read_partfile(self) -> None:
@@ -111,7 +115,7 @@ class ParticleOutput:
             for line in f:
                 if line=='': continue
                 (self.times[i],self.x[i],self.y[i],self.z[i],
-                 self.vx[i],self.vy[i],self.vz[i]) = map(float,line.split())
+                 self.vx[i],self.vy[i],self.vz[i],self.lvls[i]) = map(float,line.split())
                 i+=1
 
 class ParticleArray:
@@ -146,6 +150,7 @@ class ParticleArray:
         self.vy = np.ones(shape)*np.nan
         self.vz = np.ones(shape)*np.nan
         self.times = np.ones(shape)*np.nan
+        self.lvls = np.ones(shape)*np.nan
         for i,n in enumerate(self.N_parts):
             print(i,n,end='\r',flush=True)
             part = ParticleOutput(self.outputdir,n)
@@ -156,6 +161,7 @@ class ParticleArray:
             self.vy[i] = part.vy
             self.vz[i] = part.vz
             self.times[i] = part.times
+            self.lvls[i] = part.lvls
         print('Done reading in particles')
 
 class AllParts():
