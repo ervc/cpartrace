@@ -447,14 +447,14 @@ double get_Omega(double r) {
     return sqrt(G*MSUN/r/r/r);
 }
 
-double get_scaleheight(double r) {
-    double ASPECT = 0.05;
-    double FLARING = 0.25;
+double get_scaleheight(Model *model, double r) {
+    double ASPECT = model->aspect;
+    double FLARING = model->flaring;
     return r*ASPECT*pow(r/R0,FLARING);
 }
 
 double get_soundspeed(Model *model, double r) {
-    double H = get_scaleheight(r);
+    double H = get_scaleheight(model, r);
     double OM = get_Omega(r);
     return H*OM;
 }
