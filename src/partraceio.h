@@ -120,7 +120,7 @@ int read_modeltype(const char *cin) {
     } else if (atoi(cin)==RADMC_MODEL) {
         return RADMC_MODEL;
     } else {
-        printf("Cannot parse modeltyp: %s\n",cin);
+        printf("Cannot parse modeltype: %s\n",cin);
         exit(1);
     }
 }
@@ -209,30 +209,30 @@ case and separated from the value using white space and or tabs\n",key);
 }
 
 void fprintf_Inputs(FILE* fout, Inputs *in) {
-    fprintf(fout,"  FARGODIR  : %s\n",in->fargodir);
-    fprintf(fout,"  OUTPUTDIR : %s\n",in->outputdir);
-    fprintf(fout,"  NOUT      : %s\n",in->nout);
-    fprintf(fout,"  PARTFILE  : %s\n",in->partfile);
-    fprintf(fout,"  T0       : %f\n",in->t0);
-    fprintf(fout,"  TF       : %f\n",in->tf);
-    fprintf(fout,"  DTOUT    : %f\n",in->dtout);
-    fprintf(fout,"  PARTSIZE : %f\n",in->partsize);
-    fprintf(fout,"  PARTDENS : %f\n",in->partdens);
-    fprintf(fout,"  RMIN     : %f\n",in->rmin);
-    fprintf(fout,"  RMAX     : %f\n",in->rmax);
-    fprintf(fout,"  THETAMIN : %f\n",in->thetamin);
-    fprintf(fout,"  THETAMAX : %f\n",in->thetamax);
-    fprintf(fout,"  PHIMIN   : %f\n",in->phimin);
-    fprintf(fout,"  PHIMAX   : %f\n",in->phimax);
-    fprintf(fout,"  NPARTS : %d\n",in->nparts);
-    fprintf(fout,"  MODELTYPE : %d\n",in->modeltype);
-    fprintf(fout,"  DSAVE  : %d\n",in->dsave);
-    fprintf(fout,"  NSTART : %d\n",in->nstart);
-    fprintf(fout,"  DIFFUSION      : %d\n",in->diffusion);
-    fprintf(fout,"  RESIDENCETIMES : %d\n",in->residenceTimes);
-    fprintf(fout,"  VELOCITIES     : %d\n",in->velocities);
-    fprintf(fout,"  CROSSINGS      : %d\n",in->crossings);
-    fprintf(fout,"  RESET          : %d\n",in->reset);
+    fprintf(fout,"  FARGODIR   %s\n",in->fargodir);
+    fprintf(fout,"  OUTPUTDIR  %s\n",in->outputdir);
+    fprintf(fout,"  NOUT       %s\n",in->nout);
+    fprintf(fout,"  PARTFILE   %s\n",in->partfile);
+    fprintf(fout,"  T0        %f\n",in->t0);
+    fprintf(fout,"  TF        %f\n",in->tf);
+    fprintf(fout,"  DTOUT     %f\n",in->dtout);
+    fprintf(fout,"  PARTSIZE  %f\n",in->partsize);
+    fprintf(fout,"  PARTDENS  %f\n",in->partdens);
+    fprintf(fout,"  RMIN      %f\n",in->rmin);
+    fprintf(fout,"  RMAX      %f\n",in->rmax);
+    fprintf(fout,"  THETAMIN  %f\n",in->thetamin);
+    fprintf(fout,"  THETAMAX  %f\n",in->thetamax);
+    fprintf(fout,"  PHIMIN    %f\n",in->phimin);
+    fprintf(fout,"  PHIMAX    %f\n",in->phimax);
+    fprintf(fout,"  NPARTS     %d\n",in->nparts);
+    fprintf(fout,"  MODELTYPE  %d\n",in->modeltype);
+    fprintf(fout,"  DSAVE      %d\n",in->dsave);
+    fprintf(fout,"  NSTART     %d\n",in->nstart);
+    fprintf(fout,"  DIFFUSION       %d\n",in->diffusion);
+    fprintf(fout,"  RESIDENCETIMES  %d\n",in->residenceTimes);
+    fprintf(fout,"  VELOCITIES      %d\n",in->velocities);
+    fprintf(fout,"  CROSSINGS       %d\n",in->crossings);
+    fprintf(fout,"  RESET           %d\n",in->reset);
 }
 
 void print_Inputs(Inputs *in) {
