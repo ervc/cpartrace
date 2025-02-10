@@ -196,7 +196,7 @@ Inputs *read_inputs(const char* infile) {
             in->reset = read_bool(val_s);
         } else {
             printf("Ignoring unkown key in input: %s\nKeys must be all upper \
-            case and separated from the value using white space and or tabs",key);
+case and separated from the value using white space and or tabs\n",key);
         }
     }
     return in;
