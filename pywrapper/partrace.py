@@ -13,7 +13,7 @@ def grainLabel(grainsize: float) -> str:
     elif grainsize >= 1.e-4:
         return f'{grainsize*1.e4:.0f} '+r'$\mu$m'
     else:
-        return f'{grainsize:.1e} cm'
+        return f'{grainsize*1.e4:g} '+r'$\mu$m'
 
 class ModelParams:
     def __init__(self,directory: str) -> None:

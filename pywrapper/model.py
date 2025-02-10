@@ -13,6 +13,8 @@ class Model():
 
         self.read_domain()
 
+        self.dusttemp: None | np.ndarray = None
+
         ### TODO: read in model params
 
     @classmethod
@@ -146,7 +148,9 @@ class Model():
         return gvx,gvy,gvz
     
     def get_dusttempgrid(self) -> npt.NDArray:
-        return self.read_state('dusttemp')
+        if self.dusttemp is None:
+            self.dusttemp = self.read_state('dusttemp')
+        return self.dusttemp
     
     def get_dusttemp(self, x: float, y: float, z: float) -> float:
         dusttemp = self.get_dusttempgrid()

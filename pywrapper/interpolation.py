@@ -8,7 +8,7 @@ class InterpolationError(Warning):
 class OutOfBoundsError(Warning):
     pass
 
-def interp3d(arr: npt.NDArray, domain: tuple[npt.NDArray,...], coords: tuple[float,...]) -> float:
+def interp3d(arr: npt.NDArray, domain: tuple[npt.NDArray,...], coords: tuple[float,...], verbose=False) -> float:
     phicenters, rcenters, thetacenters = domain
     nx = len(phicenters)
     ny = len(rcenters)
@@ -43,16 +43,23 @@ def interp3d(arr: npt.NDArray, domain: tuple[npt.NDArray,...], coords: tuple[flo
             if phicenters[i] > phi:
                 break
         i-=1
+    if verbose:
+        print('BOTTOM INDEX:')
+        print(f'{i = }')
     for j in range(ny):
         if rcenters[j] > r:
             break
     j-=1
+    if verbose:
+        print(f'{j = }')
     if theta > thetacenters[-1]:
         k = nz-1
     for k in range(nz):
-        if thetacenters[k] < theta:
+        if thetacenters[k] > theta:
             break
     k-=1
+    if verbose:
+        print(f'{k = }')
 
     if i==nx-1:
         ip = 0
@@ -70,6 +77,8 @@ def interp3d(arr: npt.NDArray, domain: tuple[npt.NDArray,...], coords: tuple[flo
         c101 = arr[kp,j ,ip]
         c011 = arr[kp,jp,i ]
         c111 = arr[kp,jp,ip]
+        if verbose:
+            print(f'CORNERS:\n{c000 = }\t{c100 = }\t{c010 = }\t{c110 = }\n{c001 = }\t{c101 = }\t{c011 = }\t{c111 = }')
         x0 = phicenters[i ]
         x1 = phicenters[ip]
         if ip==0:
