@@ -92,7 +92,7 @@ double get_Stokes(Particle *particle) {
     r = sqrt(x*x + y*y + z*z);
     theta = acos(z/r);
     double rho_g = trilinterp_one(model, RHO, phi, r, theta);
-    double H = get_scaleheight(r);
+    double H = get_scaleheight(model, r);
     return particle->size*particle->density/H/rho_g;
 }
 
@@ -104,7 +104,7 @@ double get_partdiff(Particle *particle, double Y[6]) {
     r = sqrt(x*x + y*y + z*z);
     theta = acos(z/r);
     double rho_g = trilinterp_one(particle->model, RHO, phi, r, theta);
-    double H = get_scaleheight(r);
+    double H = get_scaleheight(particle->model, r);
     double OM = get_Omega(r);
     double St = particle->size*particle->density/H/rho_g;
     double invSt2 = 1/(1+St*St);
