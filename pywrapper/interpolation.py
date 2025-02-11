@@ -54,10 +54,11 @@ def interp3d(arr: npt.NDArray, domain: tuple[npt.NDArray,...], coords: tuple[flo
         print(f'{j = }')
     if theta > thetacenters[-1]:
         k = nz-1
-    for k in range(nz):
-        if thetacenters[k] > theta:
-            break
-    k-=1
+    else:
+        for k in range(nz):
+            if thetacenters[k] > theta:
+                break
+        k-=1
     if verbose:
         print(f'{k = }')
 
@@ -103,7 +104,7 @@ def interp3d(arr: npt.NDArray, domain: tuple[npt.NDArray,...], coords: tuple[flo
         return c0*(1-zd)+c1*zd
     else:
         # 2d midplane interpolation
-        if k==-1: k=0
+        if k==-1: k=nz-1
         c00 = arr[k,j ,i ]
         c10 = arr[k,j ,ip]
         c01 = arr[k,jp,i ]

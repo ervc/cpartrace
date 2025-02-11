@@ -41,7 +41,11 @@ class ModelParams:
                 if line.strip() in list(typefuncs.keys()):
                     typefunc = typefuncs[line.strip()]
                 else:
-                    key,val = line.split(':')
+                    try:
+                        key,val = line.split()
+                    except ValueError as e:
+                        print(line.split())
+                        raise e
                     params[key.strip()] = typefunc(val.strip())
         return params
     
@@ -62,10 +66,10 @@ class ParticleOutput:
             partnumber (int): number of particle
         """
         params = ModelParams(outputdir)
-        t0: float = params["t0"]
-        tf: float = params["tf"]
-        dtout: float = params["dtout"]
-        nt: int = int( (tf-t0)/dtout )+1+1 #plus one just in case
+        t0: float = float(params["t0"])
+        tf: float = float(params["tf"])
+        dtout: float = float(params["dtout"])
+        nt: int = int( (tf-t0)/dtout )+1
         self.fname = outputdir+f'/particle{partnumber}.txt'
         self.x = np.ones(nt)*np.nan
         self.y = np.ones(nt)*np.nan
@@ -128,10 +132,10 @@ class ParticleArray:
                 an integer is supplied, then N_parts = list(range(N_parts))
         """
         params = ModelParams(outputdir)
-        t0: float = params["t0"]
-        tf: float = params["tf"]
-        dtout: float = params["dtout"]
-        nt: int = int( (tf-t0)/dtout )+1+1 #plus one for the initial positiona and an extra just in case
+        t0: float = float(params["t0"])
+        tf: float = float(params["tf"])
+        dtout: float = float(params["dtout"])
+        nt: int = int( (tf-t0)/dtout )+1 #plus one for the initial position
         self.outputdir = outputdir
         N_parts_: list[int] = [0]
         if type(N_parts) == int:
@@ -271,6 +275,29 @@ class Velocities:
         self.vx = self.allvels[:,:,:,0]/self.nparts
         self.vy = self.allvels[:,:,:,1]/self.nparts
         self.vz = self.allvels[:,:,:,2]/self.nparts
+
+class PartTemps:
+    def __init__(self,outputdir: str) -> None:
+        """Helper to read the binary particle temperatures from interpolation
+        
+        Args:
+            outputdir (str): Output directory
+        """
+        self.outputdir = outputdir
+        self.parttemps = self.read_parttemps()
+        print(f"{self.parttemps.shape = }")
+    
+    def read_parttemps(self) -> np.ndarray:
+        tempfilename = self.outputdir+"/ctemp.bdat"
+        with open(tempfilename, "rb") as f:
+            alldata = f.read()
+        from struct import unpack
+        print(alldata[:8])
+        # arraySize = 100001*1000
+        npart = unpack("i", alldata[:4])[0]
+        ntime = unpack("i", alldata[4:8])[0]
+        parttemps = np.array(unpack("d"*npart*ntime, alldata[8:]))
+        return parttemps.reshape((npart,ntime))
 
 class Crossings:
     def __init__(self,outputdir: str) -> None:
