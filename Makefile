@@ -14,6 +14,9 @@ velocities: src/find_grain_velocities.c
 temperatures: interpolate_temps.c
 	$(CC) $(CCFLAGS) interpolate_temps.c -o interpolate_temps -lm
 
+positions: gather_positions.c
+	$(CC) $(CCFLAGS) gather_positions.c -o gather_positions -lm
+
 all: src/partrace.c
 	$(CC) $(CCFLAGS) src/partrace.c -o partrace -lm
 	$(CC) $(CCFLAGS) src/find_grain_velocities.c -o find_grain_velocities -lm

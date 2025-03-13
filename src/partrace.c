@@ -95,6 +95,10 @@ int main(int argc, char **argv) {
 
     char resFilename[100];
     if (inputs->residenceTimes) {
+        if (nlvl > 1) {
+            printf("Cannot currently track residence times with multilevel model\n");
+            return 1;
+        }
         Model* model = models[0];
         sprintf(resFilename, "%s/residenceTimes.dat",inputs->outputdir);
         if (inputs->reset) {

@@ -110,22 +110,13 @@ int main(int argc, char **argv) {
         return 1;
     }
     // char *outdir = "outputs/Jup_beyondCO_a1E-05/";
-    char outdir[100];
-    char indir[50];
-    char partsize[50];
+    char outdir[50];
     int jsn;
-    jsn = snprintf(partsize, sizeof(partsize), argv[1]);
-    jsn = snprintf(outdir, sizeof(outdir), "outputs/Jup_beyondCO_highAcc_%s/", partsize);
+    jsn = snprintf(outdir, sizeof(outdir), argv[1]);
     if (jsn>=sizeof(outdir)) {
         fputs("OUTPUT DIRECTORY TOO LONG!\n", stdout);
         return 1;
     }
-    jsn = snprintf(indir, sizeof(indir), "outputs/Jup_beyondCO_%s/", partsize);
-    if (jsn>=sizeof(indir)) {
-        fputs("OUTPUT DIRECTORY TOO LONG!\n", stdout);
-        return 1;
-    }
-
     int npart = 1000;
 
     char infile[50];
@@ -134,14 +125,6 @@ int main(int argc, char **argv) {
         fputs("INPUT FILE NAME TOO LONG\n", stdout);
     }
     Inputs *inputs = read_inputs(infile);
-    Domain *domain = init_Jupiter_Domain(inputs->fargodir, NX, NY, NZ);
-
-    char tempfile[100];
-    jsn = snprintf(tempfile, sizeof(tempfile), "%s/dusttemp0.dat", inputs->fargodir);
-    if (jsn>=sizeof(tempfile)) {
-        fputs("TEMPERATURE FILE NAME TOO LONG\n", stdout);
-    }
-    MeshField *tempfield = init_MeshField_fromFile(tempfile, NX, NY, NZ, 0);
 
     double time;
     double x,y,z;
@@ -150,14 +133,14 @@ int main(int argc, char **argv) {
 
     int nt = (int)((inputs->tf - inputs->t0)/inputs->dtout)+1;
 
-    double *dust_temps;
-    dust_temps = (double*)calloc(npart*nt, sizeof(double));
+    double *allpositions;
+    allpositions = (double*)calloc(npart*nt*3, sizeof(double));
 
     char partfile[50];
     int nline;
     fprintf(stdout, "Interpolating [%d] particles from output dir: %s\n", npart, outdir);
     for (int n=0; n<npart; n++) {
-        jsn = snprintf(partfile, sizeof(partfile), "%s/particle%d.txt", indir, n);
+        jsn = snprintf(partfile, sizeof(partfile), "%s/particle%d.txt", outdir, n);
         if (jsn>=sizeof(partfile)) {
             fputs("PARTICLE FILE NAME TOO LONG\n", stdout);
         }
@@ -168,46 +151,14 @@ int main(int argc, char **argv) {
         }
         nline = 0;
         while (fscanf(file, "%lf %lf %lf %lf %lf %lf %lf %d", &time, &x, &y, &z, &vx, &vy, &vz, &status) == 8) {
-            if (z<0) {
-                z=-z;
-            }
-            double phi = atan2(y, x);
-            double r = sqrt(x*x + y*y + z*z);
-            double theta = acos(z/r);
-
-            int i, j, k;
-            // get the corner
-            if (phi<domain->phiCenters[0]) {
-                phi += 2*M_PI;
-                i = domain->nx-1;
-            } else {
-                for (i=0; i<domain->nx; i++) {
-                    if(domain->phiCenters[i] > phi) {
-                        break;
-                    }
-                }
-                i--;
-            }
-            for (j=0;j<domain->ny;j++) {
-                if(domain->rCenters[j] > r) {
-                    break;
-                }
-            }
-            j--;
-            for (k=0;k<domain->nz;k++) {
-                if(domain->thetaCenters[k] > theta) {
-                    break;
-                }
-            }
-            k--;
-
-            int index = n*nt + nline;
+            int index = 3*(n*nt + nline);
             if (nline > nt) {
                 fprintf(stdout, "TOO MANY LINES!\n");
                 return 1;
             }
-            int VERBOSE = 0;
-            dust_temps[index] = flinterp_mesh(domain, tempfield, i, j, k, phi, r, theta, VERBOSE);
+            allpositions[index + 0] = x;
+            allpositions[index + 1] = y;
+            allpositions[index + 2] = z;
             
             nline++;
         }
@@ -217,7 +168,7 @@ int main(int argc, char **argv) {
     }
     fprintf(stdout, "\n");
     char outfile[50];
-    jsn = snprintf(outfile, sizeof(outfile), "%s/ctemp.bdat", outdir);
+    jsn = snprintf(outfile, sizeof(outfile), "%s/allpos.bdat", outdir);
     if (jsn>sizeof(outfile)) {
         fputs("OUTPUT FILE NAME TOO LONG\n", stdout);
     }
@@ -235,13 +186,13 @@ int main(int argc, char **argv) {
     /// I should be error checking here but I'm lazy
     fwrite(&npart, sizeof(npart), 1, file);
     fwrite(&nt, sizeof(nt), 1, file);
-    if (fwrite(dust_temps, sizeof(double), npart*nt, file) != npart*nt) {
+    if (fwrite(allpositions, sizeof(double), npart*nt*3, file) != npart*nt*3) {
         fputs("Error writing to binary file!\n", stdout);
         return 1;
     }
     fclose(file);
 
-    free(dust_temps);
+    free(allpositions);
 
     fprintf(stdout, "Done!\n");
     return 0;

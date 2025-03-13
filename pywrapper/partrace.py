@@ -30,10 +30,10 @@ class ModelParams:
     def read_params(self) -> dict[str, Any]:
         params = {}
         typefuncs = {
-            "Strings:" : str,
-            "Doubles:" : float,
-            "Integers:" : int,
-            "Booleans:" : bool
+            "Strings" : str,
+            "Doubles" : float,
+            "Integers" : int,
+            "Booleans" : bool
         }
         typefunc: type = str
         with open(self.paramfile,"r") as f:
@@ -243,6 +243,18 @@ def make_biggrid(smallarr: npt.NDArray, flip: str='') -> npt.NDArray:
         bigarr[nz:] = smallarr[::-1]
     return bigarr
 
+def get_closest_arg(arr: npt.NDArray, val: float) -> int:
+    """Return the index of the closest value in the array
+    
+    Args:
+        arr (NDArray): 1D array
+        val (float): value to find
+        
+    Returns:
+        int: Index of closest value
+    """
+    return np.argmin(np.abs(arr-val))
+
 class ResidenceTimes:
     def __init__(self,outputdir: str) -> None:
         """Helper to read the residence time file from CPartrace
@@ -250,9 +262,10 @@ class ResidenceTimes:
         Args:
             outputdir (str): Output directory
         """
+        params = ModelParams(outputdir)
         nz = 32
         ny = 256
-        nx = 2048
+        nx = 512
         self.resfile = outputdir+'/residenceTimes.dat'
         resout = np.fromfile(self.resfile)
         self.nparts = resout[0]
@@ -285,19 +298,43 @@ class PartTemps:
         """
         self.outputdir = outputdir
         self.parttemps = self.read_parttemps()
-        print(f"{self.parttemps.shape = }")
     
     def read_parttemps(self) -> np.ndarray:
         tempfilename = self.outputdir+"/ctemp.bdat"
         with open(tempfilename, "rb") as f:
             alldata = f.read()
         from struct import unpack
-        print(alldata[:8])
-        # arraySize = 100001*1000
         npart = unpack("i", alldata[:4])[0]
         ntime = unpack("i", alldata[4:8])[0]
         parttemps = np.array(unpack("d"*npart*ntime, alldata[8:]))
         return parttemps.reshape((npart,ntime))
+    
+class PartLocations:
+    def __init__(self, outputdir: str) -> None:
+        """Helper to read the zipped particle locations
+        
+        Args:
+            outputdir (str): Output directory
+        """
+        self.outputdir = outputdir
+        self.partlocs = self.read_partlocs()
+        self.x = self.partlocs[:,:,0]
+        self.y = self.partlocs[:,:,1]
+        self.z = self.partlocs[:,:,2]
+        self.r = np.sqrt(self.x**2 + self.y**2)
+        self.phi = np.arctan2(self.y, self.x)
+        # this is a hack but I will fix this later
+        self.times = np.linspace(0,1.e6,int(1e5+1))*const.YR
+
+    def read_partlocs(self) -> np.ndarray:
+        locfilename = self.outputdir+"/allpos.bdat"
+        with open(locfilename,"rb") as f:
+            alldata = f.read()
+        npart = np.frombuffer(alldata, dtype='i', count=1, offset=0)[0]
+        ntime = np.frombuffer(alldata, dtype='i', count=1, offset=4)[0]
+        partlocs = np.frombuffer(alldata, dtype='d', count=npart*ntime*3, offset=8)
+        partlocs = partlocs.reshape((npart,ntime,3))
+        return partlocs
 
 class Crossings:
     def __init__(self,outputdir: str) -> None:
