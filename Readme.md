@@ -10,6 +10,8 @@ Main module in `partrace.c` and `partrace.h`, functions are kept in `src/` file.
 
 See [Van Clepper et al. 2025](https://iopscience.iop.org/article/10.3847/1538-4357/ada8a4) for model details.
 
+Note: Currently the `velfinding` module is present but still experimental and does not give reliable results. This will be updated in the future
+
 ## TODO:
 
 - [ ] Input files and reading in information
@@ -28,6 +30,7 @@ See [Van Clepper et al. 2025](https://iopscience.iop.org/article/10.3847/1538-43
 - [ ] Collisions
   - [ ] barnes hut tree
   - [ ] r* tree
+  - [ ] relative velocities
 
 ### Completed tasks
 - [x] Integration with other public HD models including
