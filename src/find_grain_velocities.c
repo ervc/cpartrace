@@ -5,6 +5,8 @@
 #define NY 256
 #define NZ 32
 
+// TODO: Implement again using Newton's Method. See Notes
+
 int solve_grid(Model *model, char outfile[100], double s);
 
 int main(int argc, char **argv) {
