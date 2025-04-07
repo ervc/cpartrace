@@ -7,20 +7,30 @@ from .interpolation import interp3d
 from .partrace import ModelParams
 
 class Model():
-    def __init__(self, fargodir: str, nout: str|int):
+    def __init__(self, fargodir: str, nout: str|int, rescale=True):
         self.fargodir = fargodir
         self.nout = str(nout)
+        self.rescale = rescale
 
         self.read_domain()
+        self.fargovars = self.read_varfile()
 
         self.dusttemp: None | np.ndarray = None
 
         ### TODO: read in model params
 
     @classmethod
-    def from_partracedir(cls, directory: str):
+    def from_partracedir(cls, directory: str, rescale=True):
         params = ModelParams(directory)
-        return cls(params['fargodir'],params['nout'])
+        return cls(params['fargodir'], params['nout'], rescale)
+    
+    def read_varfile(self):
+        variables = {}
+        with open(self.fargodir+"/variables.par", "r") as f:
+            for line in f:
+                k,v = line.split()
+                variables[k] = v
+        return variables
 
     def get_omega(self, x: float, y: float, z: float) -> float:
         r = np.sqrt(x*x + y*y + z*z)
@@ -29,14 +39,16 @@ class Model():
     def get_scaleheight(self,x: float,y: float,z: float) -> float:
         ### TODO: make this general
         r = np.sqrt(x*x + y*y + z*z)
-        return 0.05*r*(r/const.R0)**(1/4)
+        h0 = float(self.fargovars['ASPECTRATIO'])
+        flaring = float(self.fargovars['FLARINGINDEX'])
+        return h0*r*(r/const.R0)**(flaring)
     
     def get_soundspeed(self,x: float, y: float,z: float) -> float:
         OM = self.get_omega(x,y,z)
         H  = self.get_scaleheight(x,y,z)
         return H*OM
         
-    def get_planet_envelope(self,mplan):
+    def get_planet_envelope(self, mplan, sma=None):
         ### TODO: make this general
         """
         double hillRadius = sma * pow(model->planetmass/3/MSUN,1.0/3.0);
@@ -45,7 +57,8 @@ class Model():
         // planet enevlope is min(hillRadius/4, bondiRadius)
         model->planetEnvelope = (hillRadius/4. < bondiRadius) ? hillRadius/4 : bondiRadius;
         """
-        sma = const.R0
+        if sma is None:
+            sma = const.R0
         m_pl = mplan*const.MEARTH
         hill = sma * (m_pl/3/const.MSUN)**(1/3)
         cs = self.get_soundspeed(sma,0,0)
@@ -98,9 +111,9 @@ class Model():
     def read_state(self, state: str) -> npt.NDArray:
         filename = self.fargodir+f'/{state}{self.nout}.dat'
         scale = 1.
-        if state=='gasdens':
+        if (state=='gasdens') and (self.rescale):
             scale = const.MASS/const.LEN/const.LEN/const.LEN
-        elif 'gasv' in state:
+        elif ('gasv' in state) and (self.rescale):
             scale = const.LEN/const.TIME
         arr = np.fromfile(filename).reshape(self.shape)
         return arr*scale
