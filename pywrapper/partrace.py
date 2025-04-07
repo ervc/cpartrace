@@ -290,47 +290,73 @@ class Velocities:
         self.vz = self.allvels[:,:,:,2]/self.nparts
 
 class PartTemps:
-    def __init__(self,outputdir: str) -> None:
+    def __init__(self,outputdir: str, npart=None) -> None:
         """Helper to read the binary particle temperatures from interpolation
         
         Args:
             outputdir (str): Output directory
         """
         self.outputdir = outputdir
-        self.parttemps = self.read_parttemps()
+        self.parttemps = self.read_parttemps(npart)
     
-    def read_parttemps(self) -> np.ndarray:
+    def read_parttemps(self, npart_) -> np.ndarray:
         tempfilename = self.outputdir+"/ctemp.bdat"
         with open(tempfilename, "rb") as f:
             alldata = f.read()
         from struct import unpack
         npart = unpack("i", alldata[:4])[0]
+        if npart_ is not None:
+            npart=npart_
         ntime = unpack("i", alldata[4:8])[0]
-        parttemps = np.array(unpack("d"*npart*ntime, alldata[8:]))
+        parttemps = np.frombuffer(alldata, dtype='d', count=npart*ntime, offset=8)
         return parttemps.reshape((npart,ntime))
     
+class PartDens:
+    def __init__(self,outputdir: str, npart=None) -> None:
+        """Helper to read the binary particle gas densities from interpolation
+        
+        Args:
+            outputdir (str): Output directory
+        """
+        self.outputdir = outputdir
+        self.partdens = self.read_partdens(npart)
+    
+    def read_partdens(self, npart_) -> np.ndarray:
+        tempfilename = self.outputdir+"/cdens.bdat"
+        with open(tempfilename, "rb") as f:
+            alldata = f.read()
+        from struct import unpack
+        npart = unpack("i", alldata[:4])[0]
+        if npart_ is not None:
+            npart=npart_
+        ntime = unpack("i", alldata[4:8])[0]
+        partdens = np.frombuffer(alldata, dtype='d', count=npart*ntime, offset=8)
+        return partdens.reshape((npart,ntime))
+    
 class PartLocations:
-    def __init__(self, outputdir: str) -> None:
+    def __init__(self, outputdir: str, npart=None) -> None:
         """Helper to read the zipped particle locations
         
         Args:
             outputdir (str): Output directory
         """
         self.outputdir = outputdir
-        self.partlocs = self.read_partlocs()
+        self.partlocs = self.read_partlocs(npart)
         self.x = self.partlocs[:,:,0]
         self.y = self.partlocs[:,:,1]
         self.z = self.partlocs[:,:,2]
         self.r = np.sqrt(self.x**2 + self.y**2)
         self.phi = np.arctan2(self.y, self.x)
-        # this is a hack but I will fix this later
+        # TODO: this is a hack but I will fix this later
         self.times = np.linspace(0,1.e6,int(1e5+1))*const.YR
 
-    def read_partlocs(self) -> np.ndarray:
+    def read_partlocs(self, npart_) -> np.ndarray:
         locfilename = self.outputdir+"/allpos.bdat"
         with open(locfilename,"rb") as f:
             alldata = f.read()
         npart = np.frombuffer(alldata, dtype='i', count=1, offset=0)[0]
+        if npart_ is not None:
+            npart = npart_
         ntime = np.frombuffer(alldata, dtype='i', count=1, offset=4)[0]
         partlocs = np.frombuffer(alldata, dtype='d', count=npart*ntime*3, offset=8)
         partlocs = partlocs.reshape((npart,ntime,3))
