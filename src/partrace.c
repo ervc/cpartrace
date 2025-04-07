@@ -8,6 +8,9 @@
 #define NZ 32
 #define NLVL 5
 
+void init_random_particles(Inputs *inputs, double *sizes, double *xs, double *ys, double *zs);
+void read_partifle(Inputs *inputs, double *sizes, double *xs, double *ys, double *zs);
+
 int main(int argc, char **argv) {
     printf("*** CPARTRACE VERSION %s ***\n",VERSION);
     
@@ -69,20 +72,10 @@ int main(int argc, char **argv) {
     double xs[np];
     double ys[np];
     double zs[np];
-    double rmin = inputs->rmin;
-    double rmax = inputs->rmax;
-    double phimin = inputs->phimin;
-    double phimax = inputs->phimax;
-    double thetamin = inputs->thetamin;
-    double thetamax = inputs->thetamax;
-    for (int i=0; i<np; i++) {
-        sizes[i] = size0;
-        double phi = random_range(phimin,phimax);
-        double r = random_range(rmin,rmax);
-        double theta = random_range(thetamin,thetamax);
-        xs[i] = r*cos(phi)*sin(theta);
-        ys[i] = r*sin(phi)*sin(theta);
-        zs[i] = r*cos(theta);
+    if ( strcmp(inputs->partfile, "NULL") == 0 ) {
+        init_random_particles(inputs, sizes, xs, ys, zs);
+    } else {
+        read_partfile(inputs, sizes, xs, ys, zs);
     }
 
     double t0 = inputs->t0;
@@ -182,6 +175,45 @@ int main(int argc, char **argv) {
     free_Inputs(inputs);
     free_Models(models, nlvl);
     return 0;
+}
+
+void init_random_particles(Inputs *inputs, double *sizes, double *xs, double *ys, double *zs) {
+    double rmin = inputs->rmin;
+    double rmax = inputs->rmax;
+    double phimin = inputs->phimin;
+    double phimax = inputs->phimax;
+    double thetamin = inputs->thetamin;
+    double thetamax = inputs->thetamax;
+    for (int i=0; i<inputs->nparts; i++) {
+        sizes[i] = inputs->partsize;
+        double phi = random_range(phimin,phimax);
+        double r = random_range(rmin,rmax);
+        double theta = random_range(thetamin,thetamax);
+        xs[i] = r*cos(phi)*sin(theta);
+        ys[i] = r*sin(phi)*sin(theta);
+        zs[i] = r*cos(theta);
+    }
+}
+
+void read_partfile(Inputs *inputs, double *sizes, double *xs, double *ys, double *zs) {
+    FILE *file;
+    file = fopen(inputs->partfile, "r");
+    if (file==NULL) {
+        exit(EXIT_FAILURE);
+    }
+    double s, x, y, z;
+    int nline = 0;
+    while ( fscanf(file, "%lf %lf %lf %lf", &s, &x, &y, &z) == 4 ) {
+        if ( nline>inputs->nparts ) {
+            fprintf(stdout, "TOO MANY LINES IN PARTFILE!\n");
+            exit(EXIT_FAILURE);
+        }
+        sizes[nline] = s;
+        xs[nline] = x;
+        ys[nline] = y;
+        zs[nline] = z;
+        nline++;
+    }
 }
 
 int run_partrace(char *inputfile) {
