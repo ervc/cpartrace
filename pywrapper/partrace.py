@@ -5,6 +5,19 @@ import numpy.typing as npt
 
 from . import constants as const
 
+def parse_args():
+    import sys
+    args = sys.argv[1:]
+    if args:
+        return float(args[0])
+    else:
+        return 1.e-2 # default 100 micron
+
+def savefig(figname):
+    import matplotlib.pyplot as plt
+    plt.savefig(figname, bbox_inches='tight')
+    print("Saved to: ", figname)
+
 def grainLabel(grainsize: float) -> str:
     if grainsize >= 1:
         return f'{grainsize:.0f} cm'
@@ -14,6 +27,9 @@ def grainLabel(grainsize: float) -> str:
         return f'{grainsize*1.e4:.0f} '+r'$\mu$m'
     else:
         return f'{grainsize*1.e4:g} '+r'$\mu$m'
+
+def centers(arr):
+    return (arr[1:]+arr[:-1])/2
 
 class ModelParams:
     def __init__(self,directory: str) -> None:
@@ -309,6 +325,8 @@ class PartTemps:
             npart=npart_
         ntime = unpack("i", alldata[4:8])[0]
         parttemps = np.frombuffer(alldata, dtype='d', count=npart*ntime, offset=8)
+        self.npart = npart
+        self.ntime = ntime
         return parttemps.reshape((npart,ntime))
     
 class PartDens:

@@ -7,7 +7,7 @@ from .interpolation import interp3d
 from .partrace import ModelParams
 
 class Model():
-    def __init__(self, fargodir: str, nout: str|int, rescale=True):
+    def __init__(self, fargodir: str, nout: str|int, rescale=False):
         self.fargodir = fargodir
         self.nout = str(nout)
         self.rescale = rescale
@@ -20,7 +20,7 @@ class Model():
         ### TODO: read in model params
 
     @classmethod
-    def from_partracedir(cls, directory: str, rescale=True):
+    def from_partracedir(cls, directory: str, rescale=False):
         params = ModelParams(directory)
         return cls(params['fargodir'], params['nout'], rescale)
     
@@ -37,7 +37,6 @@ class Model():
         return np.sqrt(const.G*const.MSUN/r)/r
 
     def get_scaleheight(self,x: float,y: float,z: float) -> float:
-        ### TODO: make this general
         r = np.sqrt(x*x + y*y + z*z)
         h0 = float(self.fargovars['ASPECTRATIO'])
         flaring = float(self.fargovars['FLARINGINDEX'])
