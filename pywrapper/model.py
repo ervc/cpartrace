@@ -7,10 +7,11 @@ from .interpolation import interp3d
 from .partrace import ModelParams
 
 class Model():
-    def __init__(self, fargodir: str, nout: str|int, rescale=False):
+    def __init__(self, fargodir: str, nout: str|int, rescale=False, ghost=0):
         self.fargodir = fargodir
         self.nout = str(nout)
         self.rescale = rescale
+        self.ghost = ghost
 
         self.read_domain()
         self.fargovars = self.read_varfile()
@@ -20,9 +21,9 @@ class Model():
         ### TODO: read in model params
 
     @classmethod
-    def from_partracedir(cls, directory: str, rescale=False):
+    def from_partracedir(cls, directory: str, **kwargs):
         params = ModelParams(directory)
-        return cls(params['fargodir'], params['nout'], rescale)
+        return cls(params['fargodir'], params['nout'], **kwargs)
     
     def read_varfile(self):
         variables = {}
@@ -70,11 +71,15 @@ class Model():
         self.phi_edges, self.phi_centers = self.read_domfile(
             self.fargodir+'/domain_x.dat', ghostcells=0, scale=1.
             )
+        if self.rescale:
+            scale = const.R0
+        else:
+            scale = 1.
         self.r_edges, self.r_centers = self.read_domfile(
-            self.fargodir+'/domain_y.dat', ghostcells=0, scale=1.
+            self.fargodir+'/domain_y.dat', ghostcells=self.ghost, scale=scale
             )
         self.theta_edges, self.theta_centers = self.read_domfile(
-            self.fargodir+'/domain_z.dat', ghostcells=0, scale=1.
+            self.fargodir+'/domain_z.dat', ghostcells=self.ghost, scale=1.
             )
         self.nx = len(self.phi_centers)
         self.ny = len(self.r_centers)

@@ -293,7 +293,7 @@ double get_vdiffmag(Particle *particle, double Y[6]) {
  * @param Y 
  * @param derivative 
  */
-void dYdt(Particle *particle, double Y[6], double derivative[6]) {
+void dYdt(Particle *particle, double Y[6], double derivative[6], int DIFFUSION) {
     double x,y,z,vx,vy,vz;
     double phi,r,theta;
     // TODO: Here
@@ -417,9 +417,14 @@ void dYdt(Particle *particle, double Y[6], double derivative[6]) {
         // if stokes number is low then the particle is perfectly coupled with the gas
         // set the v_eff as gas velocity
         // We will also change the particle velocity in the update step
-        derivative[0] = gasvx + partdiff/rho_g*drhodx + dpartdiffdx;
-        derivative[1] = gasvy + partdiff/rho_g*drhody + dpartdiffdy;
-        double veffz = gasvz + partdiff/rho_g*drhodz + dpartdiffdz;
+        derivative[0] = gasvx;
+        derivative[1] = gasvy;
+        double veffz = gasvz;
+        if (DIFFUSION) {
+            derivative[0] += partdiff/rho_g*drhodx + dpartdiffdx;
+            derivative[1] += partdiff/rho_g*drhody + dpartdiffdy;
+            veffz += partdiff/rho_g*drhodz + dpartdiffdz;
+        }
         if (zflag) {
             derivative[2] = -veffz;
         } else {
@@ -432,9 +437,14 @@ void dYdt(Particle *particle, double Y[6], double derivative[6]) {
     }
 
     // Veff = V + D/rho_g grad(rho) + grad(D)
-    double veffx = vx + partdiff/rho_g*drhodx + dpartdiffdx;
-    double veffy = vy + partdiff/rho_g*drhody + dpartdiffdy;
-    double veffz = vz + partdiff/rho_g*drhodz + dpartdiffdz;
+    double veffx = vx;
+    double veffy = vy;
+    double veffz = vz;
+    if (DIFFUSION) {
+        veffx += partdiff/rho_g*drhodx + dpartdiffdx;
+        veffy += partdiff/rho_g*drhody + dpartdiffdy;
+        veffz += partdiff/rho_g*drhodz + dpartdiffdz;
+    }
 
     double dsun = sqrt((x-model->sunpos[0])*(x-model->sunpos[0])
                      + (y-model->sunpos[1])*(y-model->sunpos[1]) 
@@ -495,7 +505,7 @@ void add_6vectors(double Y[6], double dt, double deriv[6], double result[6]) {
  * @param h 
  * @param result 
  */
-void rk4(Particle *particle, double h, double result[6]) {
+void rk4(Particle *particle, double h, double result[6], int DIFFUSION) {
     // derivative we will be using
     double k1[6];
     double k2[6];
@@ -509,17 +519,17 @@ void rk4(Particle *particle, double h, double result[6]) {
     // initial position and velocity vector of the particle
     get_posvelVector(particle, Y0);
     // first step to get the derivative
-    dYdt(particle, Y0, k1);
+    dYdt(particle, Y0, k1, DIFFUSION);
     // get the new location to evalutate from
     add_6vectors(Y0, h/2., k1, Y1);
     // second step
-    dYdt(particle, Y1, k2);
+    dYdt(particle, Y1, k2, DIFFUSION);
     // etc...
     add_6vectors(Y0, h/2., k2, Y2);
-    dYdt(particle, Y2, k3);
+    dYdt(particle, Y2, k3, DIFFUSION);
     
     add_6vectors(Y0, h, k3, Y3);
-    dYdt(particle, Y3, k4);
+    dYdt(particle, Y3, k4, DIFFUSION);
 
     for (int i=0; i<6; i++) {
         result[i] = Y0[i] + 1.0/6.0*(k1[i]+2.*k2[i]+2.*k3[i]+k4[i])*h;
@@ -535,7 +545,7 @@ void rk4(Particle *particle, double h, double result[6]) {
  */
 void rkstep_particle(Particle *particle, double dt, int DIFFUSION) {
     double result[6];
-    rk4(particle, dt, result);
+    rk4(particle, dt, result, DIFFUSION);
     double St = get_Stokes(particle);
     
     if (DIFFUSION) {
@@ -632,21 +642,38 @@ double get_dt(Particle *particle) {
  * @param tout 
  * @return double 
  */
-double max_dt(Particle *particle, double time, double tf, double tout) {
-    double dt1 = get_dt(particle);
-    double dt2 = 0.1 * YR;
-    double dt3 = tf-time;
-    double dt4 = tout-time;
-
-    double dt;
-    dt = dt1;
-    if (dt2<dt) {dt=dt2;}
-    if (dt3<dt) {dt=dt3;}
-    if (dt4<dt) {dt=dt4;}
+double max_dt(Particle *particle, double time, double tf, double tout, int BACKWARDS) {
+    double dt1, dt2, dt3, dt4, dt;
     double mindt = YR*1.e-12;
-    if (dt<mindt) {
-        dt = mindt;
-        printf("Warning, dt smaller than mindt. setting to mindt\n");
+    if ( !BACKWARDS ) {
+        dt1 = get_dt(particle);
+        dt2 = 0.1 * YR;
+        dt3 = tf-time;
+        dt4 = tout-time;
+
+        dt = dt1;
+        if (dt2<dt) {dt=dt2;}
+        if (dt3<dt) {dt=dt3;}
+        if (dt4<dt) {dt=dt4;}
+        if (dt<mindt) {
+            dt = mindt;
+            printf("Warning, dt smaller than mindt. setting to mindt\n");
+        }
+    } else {
+        dt1 = -get_dt(particle);
+        dt2 = -0.1 * YR;
+        dt3 = tf-time; // tf<time here so dt3 is negative
+        dt4 = tout-time; // tout<time so dt4 is negative
+
+        dt = dt1;
+        if (dt2>dt) {dt=dt2;}
+        if (dt3>dt) {dt=dt3;}
+        if (dt4>dt) {dt=dt4;}
+
+        if ( dt > (-mindt) ) {
+            dt = -mindt;
+            printf("Warning, dt smaller than mindt. setting to mindt\n");
+        }
     }
     return dt;
 
@@ -669,8 +696,8 @@ void write_crossing(char* crossFilename, Particle *part, double time) {
     fclose(crossfile);
 }
 
-void heartbeat(double time, double tf) {
-    printf("%4.0f %% \r",time/tf*100.);
+void heartbeat(double time, double t0, double tf) {
+    printf("%4.0f %% \r",(time-t0)/(tf-t0)*100);
     fflush(stdout);
 }
 
@@ -708,6 +735,7 @@ Intout integrate(Particle *particle, double t0, double tf, double dtout, int DIF
         printf("Tracking velocities\n");
         track_velocities = 1;
         velocities = calloc(velSize,sizeof(double));
+        printf("Memory allocated success\n");
     }
 
     int track_crossings = 0;
@@ -718,13 +746,19 @@ Intout integrate(Particle *particle, double t0, double tf, double dtout, int DIF
 
     double time = t0;
     int status = 0; // status of integration
-    double dt = 0.0;
-    // output every 1 year
+    double dt = 0.0; // intialize as zero
+    // save output every dtout years
     double next_tout = time + dtout;
     double next_heartbeat = 0.0;
+    int BACKWARDS = 0;
+    if ( tf < t0 ) {
+        BACKWARDS = 1;
+        printf("Stepping backwards\n");
+    }
     write_output(file, particle, time);
+    fprintf(stdout, "Printing output to %s\n", filename);
     while (status == 0) {
-        dt = max_dt(particle, time, tf, next_tout);
+        dt = max_dt(particle, time, tf, next_tout, BACKWARDS);
         rkstep_particle(particle, dt, DIFFUSION);
         time += dt;
         
@@ -778,17 +812,22 @@ Intout integrate(Particle *particle, double t0, double tf, double dtout, int DIF
             write_crossing(crossFilename,particle,time);
         }
 
-        if (time>=tf) {
+        // if forwards, tf-time is positive or zero, dt is positive, so
+        // this is only <=0 if time>=tf
+        // If backwards, tf-time is negative or zero, dt is negative, so
+        // this is only <=0 if time<=tf
+        if ( (tf-time)*dt<=0 ) {
             // simulation end
             status = COMPLETE;
             write_output(file, particle, time);
         }
-        if ((time>=next_tout) && (status == 0)) {
+        // same as tf-time
+        if ( ((next_tout-time)*dt<=0) && (status == 0) ) {
             next_tout += dtout;
             write_output(file, particle, time);
         }
-        if (time/tf > next_heartbeat) {
-            heartbeat(time,tf);
+        if ( (time-t0)/(tf-t0) > next_heartbeat ) {
+            heartbeat(time,t0,tf);
             next_heartbeat += 0.01;
         }
         

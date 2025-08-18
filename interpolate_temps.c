@@ -115,12 +115,12 @@ int main(int argc, char **argv) {
     char partsize[50];
     int jsn;
     jsn = snprintf(partsize, sizeof(partsize), argv[1]);
-    jsn = snprintf(outdir, sizeof(outdir), "outputs/Jup_beyondCO_highAcc_%s/", partsize);
+    jsn = snprintf(outdir, sizeof(outdir), "outputs/Jup_beyondCO_200au_a%s/", partsize);
     if (jsn>=sizeof(outdir)) {
         fputs("OUTPUT DIRECTORY TOO LONG!\n", stdout);
         return 1;
     }
-    jsn = snprintf(indir, sizeof(indir), "outputs/Jup_beyondCO_%s/", partsize);
+    jsn = snprintf(indir, sizeof(indir), "outputs/Jup_beyondCO_200au_a%s/", partsize);
     if (jsn>=sizeof(indir)) {
         fputs("OUTPUT DIRECTORY TOO LONG!\n", stdout);
         return 1;
@@ -128,11 +128,12 @@ int main(int argc, char **argv) {
 
     int npart = 1000;
 
-    char infile[50];
+    char infile[100];
     jsn = snprintf(infile, sizeof(infile), "%s/inputs.in", outdir);
     if (jsn>=sizeof(infile)) {
         fputs("INPUT FILE NAME TOO LONG\n", stdout);
     }
+    printf("Reading inputs from %s\n", infile);
     Inputs *inputs = read_inputs(infile);
     Domain *domain = init_Jupiter_Domain(inputs->fargodir, NX, NY, NZ);
 
@@ -153,7 +154,7 @@ int main(int argc, char **argv) {
     double *dust_temps;
     dust_temps = (double*)calloc(npart*nt, sizeof(double));
 
-    char partfile[50];
+    char partfile[100];
     int nline;
     fprintf(stdout, "Interpolating [%d] particles from output dir: %s\n", npart, outdir);
     for (int n=0; n<npart; n++) {
@@ -216,7 +217,7 @@ int main(int argc, char **argv) {
         fflush(stdout);
     }
     fprintf(stdout, "\n");
-    char outfile[50];
+    char outfile[100];
     jsn = snprintf(outfile, sizeof(outfile), "%s/ctemp.bdat", outdir);
     if (jsn>sizeof(outfile)) {
         fputs("OUTPUT FILE NAME TOO LONG\n", stdout);

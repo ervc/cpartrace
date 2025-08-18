@@ -285,7 +285,7 @@ double trilinterp_one(Model *model, int which, double phi, double r, double thet
     if (theta > model->domain->thetaCenters[model->nz-1]) {
         result = midplane_interp(model, which, phi, r);
     } else {
-        size_t corner[3];
+        size_t corner[3] = {0, 0, 0};
         get_corner(model,phi,r,theta,corner);
         i=corner[0]; j=corner[1]; k=corner[2];
         result = fast_linterp(model, which, i,j,k, phi,r,theta);

@@ -88,6 +88,10 @@ Model *init_fargo_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t
     model->nx = nx;
     model->ny = ny;
     model->nz = nz;
+
+    // initialize the domain
+    model->domain = init_Domain(fargodir,nx,ny,nz);
+
     // read in the files
     char rhofile[100];
     char vphifile[100];
@@ -110,8 +114,7 @@ Model *init_fargo_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t
     MeshField *gasvr     = init_MeshField_fromFile(vrfile,nx,ny,nz,VR);
     MeshField *gasvtheta = init_MeshField_fromFile(vthetafile,nx,ny,nz,VTHETA);
 
-    // initialize the domain
-    model->domain = init_Domain(fargodir,nx,ny,nz);
+    
 
     // get the cartesian gas velocities
     printf("Making cartvels...\n");

@@ -9,7 +9,7 @@ G = 6.674e-8
 YR = 3.1557600e7
 RJUP = 6.995e9
 
-R0 = ( 75*AU )
+R0 = ( 5.2*AU )
 
 LEN = ( R0 )
 MASS = ( MSUN )

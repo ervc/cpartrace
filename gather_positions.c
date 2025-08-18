@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
         return 1;
     }
     // char *outdir = "outputs/Jup_beyondCO_a1E-05/";
-    char outdir[50];
+    char outdir[100];
     int jsn;
     jsn = snprintf(outdir, sizeof(outdir), argv[1]);
     if (jsn>=sizeof(outdir)) {
@@ -119,7 +119,7 @@ int main(int argc, char **argv) {
     }
     int npart = 1000;
 
-    char infile[50];
+    char infile[100];
     jsn = snprintf(infile, sizeof(infile), "%s/inputs.in", outdir);
     if (jsn>=sizeof(infile)) {
         fputs("INPUT FILE NAME TOO LONG\n", stdout);
@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
     double *allpositions;
     allpositions = (double*)calloc(npart*nt*3, sizeof(double));
 
-    char partfile[50];
+    char partfile[100];
     int nline;
     fprintf(stdout, "Interpolating [%d] particles from output dir: %s\n", npart, outdir);
     for (int n=0; n<npart; n++) {
@@ -167,7 +167,7 @@ int main(int argc, char **argv) {
         fflush(stdout);
     }
     fprintf(stdout, "\n");
-    char outfile[50];
+    char outfile[100];
     jsn = snprintf(outfile, sizeof(outfile), "%s/allpos.bdat", outdir);
     if (jsn>sizeof(outfile)) {
         fputs("OUTPUT FILE NAME TOO LONG\n", stdout);

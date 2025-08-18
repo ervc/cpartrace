@@ -3,13 +3,21 @@
 // #include "mlinterp.hpp"
 
 // defaults
+// my fargo models:
+// NX	2048
+// NY	256
+// NZ	32
+// Felipe's radmc models:
+// NX   512
+// NY   256
+// NZ   32
 #define NX 512
 #define NY 256
 #define NZ 32
 #define NLVL 5
 
 void init_random_particles(Inputs *inputs, double *sizes, double *xs, double *ys, double *zs);
-void read_partifle(Inputs *inputs, double *sizes, double *xs, double *ys, double *zs);
+void read_partfile(Inputs *inputs, double *sizes, double *xs, double *ys, double *zs);
 
 int main(int argc, char **argv) {
     printf("*** CPARTRACE VERSION %s ***\n",VERSION);
@@ -65,8 +73,6 @@ int main(int argc, char **argv) {
     // seed the random number generator
     srand(time(NULL));
 
-    
-    double size0 = inputs->partsize;
     int np = inputs->nparts;
     double sizes[np];
     double xs[np];
@@ -81,6 +87,24 @@ int main(int argc, char **argv) {
     double t0 = inputs->t0;
     double tf = inputs->tf;
     double dtout = inputs->dtout;
+    int BACKWARDS = 0; // is the integration backwards in time?
+    if ( tf < t0 ) {
+        printf("Integrating backwards in time\n");
+        BACKWARDS = 1;
+        if (inputs->diffusion) {
+            printf("!!! ERROR: Integrating backwards with diffusion is not physically correct and is not recommended !!!\n");
+            return 1;
+        }
+    }
+    if ( ((tf-t0)*dtout)<0 ) {
+        if (BACKWARDS) {
+            printf("Integration is backwards in time but dtout is postive. Setting dtout = -dtout\n");
+        }
+        else {
+            printf("Integration is forward in time but dtout is negative. Seting dtout = -dtout\n");
+        }
+        dtout = -dtout;
+    }
     Intout result;
     result.status = 0;
     result.tf = 0.0;
@@ -90,6 +114,10 @@ int main(int argc, char **argv) {
     if (inputs->residenceTimes) {
         if (nlvl > 1) {
             printf("Cannot currently track residence times with multilevel model\n");
+            return 1;
+        }
+        if (BACKWARDS) {
+            printf("Cannot track residence times with backwards integration\n");
             return 1;
         }
         Model* model = models[0];
@@ -199,6 +227,7 @@ void read_partfile(Inputs *inputs, double *sizes, double *xs, double *ys, double
     FILE *file;
     file = fopen(inputs->partfile, "r");
     if (file==NULL) {
+        printf("Cannot open partfile: %s\n", inputs->partfile);
         exit(EXIT_FAILURE);
     }
     double s, x, y, z;
@@ -214,11 +243,12 @@ void read_partfile(Inputs *inputs, double *sizes, double *xs, double *ys, double
         zs[nline] = z;
         nline++;
     }
+    fclose(file);
 }
 
-int run_partrace(char *inputfile) {
-    char *argv[2];
-    strcpy(argv[0],"./partrace");
-    strcpy(argv[1],inputfile);
-    return main(2,argv);
-}
+// int run_partrace(char *inputfile) {
+//     char *argv[2];
+//     strcpy(argv[0],"./partrace");
+//     strcpy(argv[1],inputfile);
+//     return main(2,argv);
+// }

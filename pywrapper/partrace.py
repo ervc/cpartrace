@@ -272,19 +272,23 @@ def get_closest_arg(arr: npt.NDArray, val: float) -> int:
     return np.argmin(np.abs(arr-val))
 
 class ResidenceTimes:
-    def __init__(self,outputdir: str) -> None:
+    def __init__(self,outputdir: str, **kwargs) -> None:
         """Helper to read the residence time file from CPartrace
 
         Args:
             outputdir (str): Output directory
         """
         params = ModelParams(outputdir)
-        nz = 32
-        ny = 256
-        nx = 512
+        from .model import Model
+        model = Model.from_partracedir(outputdir, **kwargs)
+        nz = model.nz
+        ny = model.ny
+        nx = model.nx
         self.resfile = outputdir+'/residenceTimes.dat'
         resout = np.fromfile(self.resfile)
+        print('resout = ', resout[:10])
         self.nparts = resout[0]
+        print('nparts = ', self.nparts)
         self.restimes = resout[1:].reshape((2*nz,ny,nx))
 
 class Velocities:
@@ -359,14 +363,27 @@ class PartLocations:
             outputdir (str): Output directory
         """
         self.outputdir = outputdir
-        self.partlocs = self.read_partlocs(npart)
+        params = ModelParams(outputdir)
+        # TODO: this is a hack but I will fix this later
+        # update: this bit me in the ass because I was lazy :(
+        # it is now fixed but I'm leaving this here as punishment
+        # and as a reminder to do it right the first time
+        tf = float(params['TF'])
+        t0 = float(params['T0'])
+        dt = float(params['DTOUT'])
+        nt = int((tf-t0)//dt)+1
+        self.times = np.linspace(t0,tf,nt)
+        try:
+            self.partlocs = self.read_partlocs(npart)
+        except FileNotFoundError:
+            npart_ = int(params['NPARTS'])
+            self.partlocs = np.zeros((npart_, nt, 3))
         self.x = self.partlocs[:,:,0]
         self.y = self.partlocs[:,:,1]
         self.z = self.partlocs[:,:,2]
         self.r = np.sqrt(self.x**2 + self.y**2)
         self.phi = np.arctan2(self.y, self.x)
-        # TODO: this is a hack but I will fix this later
-        self.times = np.linspace(0,1.e6,int(1e5+1))*const.YR
+
 
     def read_partlocs(self, npart_) -> np.ndarray:
         locfilename = self.outputdir+"/allpos.bdat"
