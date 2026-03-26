@@ -1,8 +1,8 @@
 # include "src/partrace.h"
 
-#define NX 512
+#define NX 128
 #define NY 256
-#define NZ 32
+#define NZ 36
 
 double flinterp_mesh(Domain *domain, MeshField *meshdata, int i, size_t j, size_t k,
                         double phi, double r, double theta, int VERBOSE) {
@@ -115,12 +115,12 @@ int main(int argc, char **argv) {
     char partsize[50];
     int jsn;
     jsn = snprintf(partsize, sizeof(partsize), argv[1]);
-    jsn = snprintf(outdir, sizeof(outdir), "outputs/Jup_beyondCO_200au_a%s/", partsize);
+    jsn = snprintf(outdir, sizeof(outdir), "outputs/alpha3_mplan300_uvgap50au_a%s/", partsize);
     if (jsn>=sizeof(outdir)) {
         fputs("OUTPUT DIRECTORY TOO LONG!\n", stdout);
         return 1;
     }
-    jsn = snprintf(indir, sizeof(indir), "outputs/Jup_beyondCO_200au_a%s/", partsize);
+    jsn = snprintf(indir, sizeof(indir), "outputs/alpha3_mplan300_uvgap50au_a%s/", partsize);
     if (jsn>=sizeof(indir)) {
         fputs("OUTPUT DIRECTORY TOO LONG!\n", stdout);
         return 1;
@@ -135,10 +135,14 @@ int main(int argc, char **argv) {
     }
     printf("Reading inputs from %s\n", infile);
     Inputs *inputs = read_inputs(infile);
-    Domain *domain = init_Jupiter_Domain(inputs->fargodir, NX, NY, NZ);
+    // Domain *domain = init_Jupiter_Domain(inputs->fargodir, NX, NY, NZ);
+
+    // read domain from radmc directory
+    char *radmcdir = "/home/ericvc/radmc3d-2.0/alpha3_mplan300_50au";
+    Domain *domain = init_Jupiter_Domain(radmcdir, NX, NY, NZ);
 
     char tempfile[100];
-    jsn = snprintf(tempfile, sizeof(tempfile), "%s/dusttemp0.dat", inputs->fargodir);
+    jsn = snprintf(tempfile, sizeof(tempfile), "%s/dusttempavg.dat", radmcdir);
     if (jsn>=sizeof(tempfile)) {
         fputs("TEMPERATURE FILE NAME TOO LONG\n", stdout);
     }
@@ -172,7 +176,7 @@ int main(int argc, char **argv) {
             if (z<0) {
                 z=-z;
             }
-            double phi = atan2(y, x);
+            double phi = atan2(y, x) + M_PI;
             double r = sqrt(x*x + y*y + z*z);
             double theta = acos(z/r);
 
