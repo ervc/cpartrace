@@ -4,16 +4,16 @@
 
 // defaults
 // my fargo models:
-// NX	2048
-// NY	256
-// NZ	32
+// NX	2048 or 1024
+// NY	256 or 128
+// NZ	32 or 36
 // Felipe's radmc models:
 // NX   512
 // NY   256
 // NZ   32
-#define NX 512
-#define NY 256
-#define NZ 32
+#define NX 1024
+#define NY 128
+#define NZ 36
 #define NLVL 5
 
 void init_random_particles(Inputs *inputs, double *sizes, double *xs, double *ys, double *zs);
