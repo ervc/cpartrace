@@ -106,11 +106,11 @@ class ParticleOutput:
         vxs = []
         vys = []
         vzs = []
-        lvls = []
+        # lvls = []
         with open(self.fname,"r") as f:
             for line in f:
                 if line=='': continue
-                t,x,y,z,vx,vy,vz,lvl = map(float,line.split())
+                t,x,y,z,vx,vy,vz = map(float,line.split())
                 ts.append(t)
                 xs.append(x)
                 ys.append(y)
@@ -118,7 +118,7 @@ class ParticleOutput:
                 vxs.append(vx)
                 vys.append(vy)
                 vzs.append(vz)
-                lvls.append(lvl)
+                # lvls.append(lvl)
         self.times = np.array(ts)
         self.x = np.array(xs)
         self.y = np.array(ys)
@@ -126,7 +126,7 @@ class ParticleOutput:
         self.vx = np.array(vxs)
         self.vy = np.array(vys)
         self.vz = np.array(vzs)
-        self.lvl = np.array(lvls)
+        # self.lvl = np.array(lvls)
         return
 
     def read_partfile(self) -> None:
@@ -135,7 +135,7 @@ class ParticleOutput:
             for line in f:
                 if line=='': continue
                 (self.times[i],self.x[i],self.y[i],self.z[i],
-                 self.vx[i],self.vy[i],self.vz[i],self.lvls[i]) = map(float,line.split())
+                 self.vx[i],self.vy[i],self.vz[i]) = map(float,line.split())
                 i+=1
 
 class ParticleArray:
@@ -289,6 +289,7 @@ class ResidenceTimes:
         print('resout = ', resout[:10])
         self.nparts = resout[0]
         print('nparts = ', self.nparts)
+        print(resout.shape)
         self.restimes = resout[1:].reshape((2*nz,ny,nx))
 
 class Velocities:
@@ -332,6 +333,65 @@ class PartTemps:
         self.npart = npart
         self.ntime = ntime
         return parttemps.reshape((npart,ntime))
+
+class PartUV:
+    def __init__(self,outputdir: str, npart=None) -> None:
+        """Helper to read the binary particle uv exposures from interpolation
+        
+        Args:
+            outputdir (str): Output directory
+        """
+        self.outputdir = outputdir
+        self.partuv = self.read_partuv(npart)
+    
+    def read_partuv(self, npart_) -> np.ndarray:
+        uvfilename = self.outputdir+"/cuv.bdat"
+        with open(uvfilename, "rb") as f:
+            alldata = f.read()
+        from struct import unpack
+        npart = unpack("i", alldata[:4])[0]
+        if npart_ is not None:
+            npart=npart_
+        ntime = unpack("i", alldata[4:8])[0]
+        partuv = np.frombuffer(alldata, dtype='d', count=npart*ntime, offset=8)
+        self.npart = npart
+        self.ntime = ntime
+        return partuv.reshape((npart,ntime))
+    
+class PartProcessingTimescales:
+    def __init__(self,outputdir: str, npart=None) -> None:
+        """Helper to read the binary particle uv exposures from interpolation
+        
+        Args:
+            outputdir (str): Output directory
+        """
+        self.outputdir = outputdir
+        self.specs = ['H2O', 'CO', 'CO2', 'CH4', 'NH3']
+        self.taus = ['thermal', 'pdes', 'pdiss']
+        self.tau = {}
+        self.mintau = {}
+        self.whichtau = {}
+        for spec in self.specs:
+            for tau in self.taus:
+                self.tau[f"{tau}_{spec}"] = self.read_parttimescale(tau, spec)
+            shape = 3, self.npart, self.ntime
+            alltau = np.zeros(shape)
+            for i,tau in enumerate(self.taus):
+                alltau[i] = self.tau[f"{tau}_{spec}"]
+            self.mintau[f"{spec}"] = np.min(alltau,axis=0)
+            self.whichtau[f"{spec}"] = np.argmin(alltau,axis=0)
+    
+    def read_parttimescale(self, tau, spec) -> np.ndarray:
+        taufilename = self.outputdir+f"/part_{tau}_{spec}.bdat"
+        with open(taufilename, "rb") as f:
+            alldata = f.read()
+        from struct import unpack
+        npart = unpack("i", alldata[:4])[0]
+        ntime = unpack("i", alldata[4:8])[0]
+        parttau = np.frombuffer(alldata, dtype='d', count=npart*ntime, offset=8)
+        self.npart = npart
+        self.ntime = ntime
+        return parttau.reshape((npart,ntime))
     
 class PartDens:
     def __init__(self,outputdir: str, npart=None) -> None:
@@ -392,6 +452,7 @@ class PartLocations:
         npart = np.frombuffer(alldata, dtype='i', count=1, offset=0)[0]
         if npart_ is not None:
             npart = npart_
+        self.npart = npart
         ntime = np.frombuffer(alldata, dtype='i', count=1, offset=4)[0]
         partlocs = np.frombuffer(alldata, dtype='d', count=npart*ntime*3, offset=8)
         partlocs = partlocs.reshape((npart,ntime,3))
