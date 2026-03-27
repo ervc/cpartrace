@@ -14,4 +14,4 @@
 #include "integrate.h"
 #include "partraceio.h"
 
-#define VERSION "v0.0.1"
+#define VERSION "v1.1.0"

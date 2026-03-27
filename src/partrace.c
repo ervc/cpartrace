@@ -1,4 +1,5 @@
 #include "partrace.h"
+#include <mpi.h>
 // this technically makes this a c++ file
 // #include "mlinterp.hpp"
 
@@ -20,19 +21,32 @@ void init_random_particles(Inputs *inputs, double *sizes, double *xs, double *ys
 void read_partfile(Inputs *inputs, double *sizes, double *xs, double *ys, double *zs);
 
 int main(int argc, char **argv) {
-    printf("*** CPARTRACE VERSION %s ***\n",VERSION);
-    
+    int rank = 0, nprocs = 1;
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+
+    if (rank == 0) {
+        printf("*** CPARTRACE VERSION %s ***\n", VERSION);
+    }
+
     // read inputs
     char infile[100];
     Inputs *inputs = init_Inputs();
-    if (argc <=1 ) {
-        printf("No input supplied, using defaults\n");
+    if (argc <= 1) {
+        if (rank == 0) printf("No input supplied, using defaults\n");
     } else {
         strcpy(infile, argv[1]);
-        printf("Reading input file: %s\n", infile);
+        if (rank == 0) printf("Reading input file: %s\n", infile);
         inputs = read_inputs(infile);
     }
-    if ( makedir(inputs->outputdir) < 0 ) { exit(1); }
+    if (rank == 0) {
+        if (makedir(inputs->outputdir) < 0) { 
+            MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
+        }
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+
     FILE *fin;
     char inputout[100];
     sprintf(inputout,"%s/inputs.in",inputs->outputdir);
@@ -74,15 +88,27 @@ int main(int argc, char **argv) {
     srand(time(NULL));
 
     int np = inputs->nparts;
-    double sizes[np];
-    double xs[np];
-    double ys[np];
-    double zs[np];
-    if ( strcmp(inputs->partfile, "NULL") == 0 ) {
-        init_random_particles(inputs, sizes, xs, ys, zs);
-    } else {
-        read_partfile(inputs, sizes, xs, ys, zs);
+    double *sizes = malloc(np * sizeof(double));
+    double *xs = malloc(np * sizeof(double));
+    double *ys = malloc(np * sizeof(double));
+    double *zs = malloc(np * sizeof(double));
+    if (sizes == NULL || xs == NULL || ys == NULL || zs == NULL) {
+        fprintf(stderr, "Rank %d: failed to allocate particle arrays\n", rank);
+        MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
     }
+
+    if (rank == 0) {
+        if (strcmp(inputs->partfile, "NULL") == 0) {
+            init_random_particles(inputs, sizes, xs, ys, zs);
+        } else {
+            read_partfile(inputs, sizes, xs, ys, zs);
+        }
+    }
+
+    MPI_Bcast(sizes, np, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(xs, np, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(ys, np, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(zs, np, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     double t0 = inputs->t0;
     double tf = inputs->tf;
@@ -108,22 +134,34 @@ int main(int argc, char **argv) {
     Intout result;
     result.status = 0;
     result.tf = 0.0;
-    int all_final[np];
+    int *all_final = malloc(np * sizeof(int));
+    if (all_final == NULL) {
+        fprintf(stderr, "Rank %d: failed to allocate all_final\n", rank);
+        MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
+    }
 
-    char resFilename[100];
+    char resFilename[128];
     if (inputs->residenceTimes) {
         if (nlvl > 1) {
-            printf("Cannot currently track residence times with multilevel model\n");
+            if (rank == 0) printf("Cannot currently track residence times with multilevel model\n");
+            MPI_Finalize();
             return 1;
         }
         if (BACKWARDS) {
-            printf("Cannot track residence times with backwards integration\n");
+            if (rank == 0) printf("Cannot track residence times with backwards integration\n");
+            MPI_Finalize();
             return 1;
         }
         Model* model = models[0];
-        sprintf(resFilename, "%s/residenceTimes.dat",inputs->outputdir);
+        if (nprocs > 1) {
+            sprintf(resFilename, "%s/residenceTimes_rank%d.dat", inputs->outputdir, rank);
+        } else {
+            sprintf(resFilename, "%s/residenceTimes.dat", inputs->outputdir);
+        }
         if (inputs->reset) {
-            printf("!!! Resetting Residence Times !!!\n");
+            if (rank == 0) {
+                printf("!!! Resetting Residence Times !!!\n");
+            }
             FILE *resFile;
             resFile = fopen(resFilename,"wb");
             size_t bigSize = 2*model->nz*model->ny*model->nx;
@@ -138,28 +176,40 @@ int main(int argc, char **argv) {
         strcpy(resFilename,"NULL");
     }
 
-    char velFilename[100];
+    char velFilename[128];
     if (inputs->velocities) {
-        sprintf(velFilename, "%s/velocities.dat",inputs->outputdir);
+        if (nprocs > 1) {
+            sprintf(velFilename, "%s/velocities_rank%d.dat", inputs->outputdir, rank);
+        } else {
+            sprintf(velFilename, "%s/velocities.dat", inputs->outputdir);
+        }
     } else {
-        strcpy(velFilename,"NULL");
+        strcpy(velFilename, "NULL");
     }
 
-    char crossFilename[100];
+    char crossFilename[128];
     if (inputs->crossings) {
-        sprintf(crossFilename, "%s/partCrossings.txt",inputs->outputdir);
+        if (nprocs > 1) {
+            sprintf(crossFilename, "%s/partCrossings_rank%d.txt", inputs->outputdir, rank);
+        } else {
+            sprintf(crossFilename, "%s/partCrossings.txt", inputs->outputdir);
+        }
         // if reset option then write a blank file
         if (inputs->reset) {
             FILE *crossFile;
-            crossFile = fopen(crossFilename,"w");
+            crossFile = fopen(crossFilename, "w");
             fclose(crossFile);
         }
     } else {
-        strcpy(crossFilename,"NULL");
+        strcpy(crossFilename, "NULL");
     }
 
-    char allpartsFilename[100];
-    sprintf(allpartsFilename, "%s/allparts.txt",inputs->outputdir);
+    char allpartsFilename[128];
+    if (nprocs > 1) {
+        sprintf(allpartsFilename, "%s/allparts_rank%d.txt", inputs->outputdir, rank);
+    } else {
+        sprintf(allpartsFilename, "%s/allparts.txt", inputs->outputdir);
+    }
     FILE *allpartsf;
     // if the file doesn't exist yet or reset is picked, create it and write the header
     if(!fileExists(allpartsFilename) || inputs->reset) {
@@ -168,40 +218,46 @@ int main(int argc, char **argv) {
         fclose(allpartsf);
     }
 
-    // TODO: Parallelize this loop
-    for (int i=0; i<np; i++) {
-        printf("Starting loop\n");
-        char filename[100];
+    // parallel loop over particles
+    for (int i = rank; i < np; i += nprocs) {
+        printf("[rank %d] Starting particle %d\n", rank, i);
+        char filename[128];
         // save every dsave-th output
-        if ((i%inputs->dsave) == 0) {
-            sprintf(filename, "%s/particle%d.txt",inputs->outputdir,i+inputs->nstart);
+        if ((i % inputs->dsave) == 0) {
+            sprintf(filename, "%s/particle%d.txt", inputs->outputdir, i + inputs->nstart);
         } else {
-            strcpy(filename,"NULL");
+            strcpy(filename, "NULL");
         }
-        printf("Starting number: %d\n",i);
-        if (strcmp(filename,"NULL") != 0) {
-            printf("Saving output to %s\n",filename);
+        if (strcmp(filename, "NULL") != 0) {
+            printf("[rank %d] Saving output to %s\n", rank, filename);
         }
         Particle *p = init_Particle(models, nlvl, sizes[i], xs[i], ys[i], zs[i]);
-        printf("Integrating...\n");
+        printf("[rank %d] Integrating...\n", rank);
         result = integrate(p, t0, tf, dtout, inputs->diffusion,
                                  filename, resFilename, velFilename, crossFilename);
         // save to the allparts file
-        allpartsf = fopen(allpartsFilename,"a");
-        fprintf(allpartsf, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\n",result.tf,xs[i],ys[i],zs[i],p->x,p->y,p->z,result.status);
+        allpartsf = fopen(allpartsFilename, "a");
+        fprintf(allpartsf, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\n", result.tf, xs[i], ys[i], zs[i], p->x, p->y, p->z, result.status);
         fclose(allpartsf);
         all_final[i] = result.status;
         free_Particle(p);
     }
 
-    printf("All statuses: ");
-    for (int i=0; i<np; i++) {
-        printf("%d, ",all_final[i]);
+    printf("[rank %d] statuses: ", rank);
+    for (int i = rank; i < np; i += nprocs) {
+        printf("%d, ", all_final[i]);
     }
     printf("\n");
 
     free_Inputs(inputs);
     free_Models(models, nlvl);
+    free(sizes);
+    free(xs);
+    free(ys);
+    free(zs);
+    free(all_final);
+
+    MPI_Finalize();
     return 0;
 }
 
