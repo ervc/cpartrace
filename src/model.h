@@ -56,25 +56,25 @@ void make_cartvels(Model *model, MeshField *gasvphi, MeshField *gasvr, MeshField
 void init_gradrho(Model *model);
 void get_planetVars(Variables *var, Model *model);
 double get_soundspeed(Model *model, double r);
-Model *init_fargo_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t nz);
-Model *init_Jupiter_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t nz);
-Model *init_RADMC_Model(char* fargodir, char*nout, size_t nx, size_t ny, size_t nz);
+Model *init_fargo_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t nz, int rank);
+Model *init_Jupiter_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t nz, int rank);
+Model *init_RADMC_Model(char* fargodir, char*nout, size_t nx, size_t ny, size_t nz, int rank);
 
-Model *init_Model(int which, char* fargodir, char* nout, size_t nx, size_t ny, size_t nz) {
+Model *init_Model(int which, char* fargodir, char* nout, size_t nx, size_t ny, size_t nz, int rank) {
     switch (which) {
         case FARGO_MODEL:
-            return init_fargo_Model(fargodir, nout, nx, ny, nz);
+            return init_fargo_Model(fargodir, nout, nx, ny, nz, rank);
         case JUPITER_MODEL:
-            return init_Jupiter_Model(fargodir, nout, nx, ny, nz);
+            return init_Jupiter_Model(fargodir, nout, nx, ny, nz, rank);
         case RADMC_MODEL:
-            return init_RADMC_Model(fargodir, nout, nx, ny, nz);
+            return init_RADMC_Model(fargodir, nout, nx, ny, nz, rank);
         default:
             printf("Assuming model input is from Fargo\n");
-            return init_fargo_Model(fargodir, nout, nx, ny, nz);
+            return init_fargo_Model(fargodir, nout, nx, ny, nz, rank);
     }
 }
 
-Model *init_fargo_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t nz) {
+Model *init_fargo_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t nz, int rank) {
     // allocate memory
     Model *model = (Model*)malloc(sizeof(*model));
     if (!model) {
@@ -117,16 +117,16 @@ Model *init_fargo_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t
     
 
     // get the cartesian gas velocities
-    printf("Making cartvels...\n");
+    if (rank==0) printf("Making cartvels...\n");
     make_cartvels(model, gasvphi, gasvr, gasvtheta);
     
     // make the density gradients in cartesian
-    printf("Getting Gradrho...\n");
+    if (rank==0) printf("Getting Gradrho...\n");
     init_gradrho(model);
 
-    printf("Getting variables...\n");
+    if (rank==0) printf("Getting variables...\n");
     Variables *var = init_Variables_fromFile(varfile);
-    printf("Getting planet variables...\n");
+    if (rank==0) printf("Getting planet variables...\n");
     get_planetVars(var,model);
     // read the variables and rescale where necessary
     model->alpha = get_value(var,"ALPHA");              // unitless
@@ -154,8 +154,10 @@ Model *init_fargo_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t
     model->planetEnvelope = (hillRadius/4. < bondiRadius) ? hillRadius/4 : bondiRadius;
 
 
-    printf("Read in variables: \n");
-    print_variables(var);
+    if (rank==0) {
+        printf("Read in variables: \n");
+        print_variables(var);
+    }
 
     free_Variables(var);
 
@@ -166,7 +168,7 @@ Model *init_fargo_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t
     return model;
 }
 
-Model *init_Jupiter_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t nz) {
+Model *init_Jupiter_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t nz, int rank) {
     Model *model = (Model*)malloc(sizeof(*model));
     if (!model) {
         perror("Malloc Failed on Model Creation");
@@ -236,7 +238,7 @@ Model *init_Jupiter_Model(char* fargodir, char* nout, size_t nx, size_t ny, size
     return model;
 }
 
-Model *init_RADMC_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t nz) {
+Model *init_RADMC_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t nz, int rank) {
     Model *model = (Model*)malloc(sizeof(*model));
     if (!model) {
         perror("Malloc Failed on Model Creation");
@@ -277,15 +279,15 @@ Model *init_RADMC_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t
     model->domain = init_Jupiter_Domain(fargodir,nx,ny,nz);
 
     // get the cartesian gas velocities
-    printf("Making cartvels...\n");
+    if (rank==0) printf("Making cartvels...\n");
     make_cartvels(model, gasvphi, gasvr, gasvtheta);
 
     // get the gradients
     init_gradrho(model);
 
-    printf("Getting variables...\n");
+    if (rank==0) printf("Getting variables...\n");
     Variables *var = init_Variables_fromFile(varfile);
-    printf("Getting planet variables...\n");
+    if (rank==0) printf("Getting planet variables...\n");
     get_planetVars(var,model);
     // read the variables and rescale where necessary
     model->alpha = get_value(var,"ALPHA");               // unitless

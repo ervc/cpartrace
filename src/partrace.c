@@ -15,7 +15,7 @@
 #define NX 2048
 #define NY 256
 #define NZ 32
-#define NLVL 1
+#define NLVL 5
 
 void init_random_particles(Inputs *inputs, double *sizes, double *xs, double *ys, double *zs);
 void read_partfile(Inputs *inputs, double *sizes, double *xs, double *ys, double *zs);
@@ -65,23 +65,24 @@ int main(int argc, char **argv) {
     
     // make the model
     if (rank==0) printf("making Model...\n");
-    Model *models[NLVL];
-    int nlvl = NLVL;
+    int nlvl = 5;
+    if (inputs->modeltype==JUPITER_MODEL) {nlvl = 5;}
+    else {nlvl = 1;}
+    Model *models[nlvl];
     if (inputs->modeltype==JUPITER_MODEL) {
-        nlvl = NLVL;
-        size_t nxs[NLVL] = {680, 120, 120, 120, 120};
-        size_t nys[NLVL] = {215, 120, 120, 120, 120};
-        size_t nzs[NLVL] = {20, 34, 62, 86, 86};
+        size_t nxs[nlvl] = {680, 120, 120, 120, 120};
+        size_t nys[nlvl] = {215, 120, 120, 120, 120};
+        size_t nzs[nlvl] = {20, 34, 62, 86, 86};
         for (int i=0; i<NLVL; i++) {
             char leveldir[100];
             sprintf(leveldir,"%s/fargolev%d/",inputs->fargodir,i);
-            models[i] = init_Model(inputs->modeltype,leveldir,"0",nxs[i],nys[i],nzs[i]);
+            models[i] = init_Model(inputs->modeltype,leveldir,"0",nxs[i],nys[i],nzs[i], rank);
         }
         // default model level0
         if (rank == 0) printf("Models initialized\n");
     } else {
         nlvl = 1;
-        models[0] = init_Model(inputs->modeltype,inputs->fargodir,inputs->nout,nx,ny,nz);
+        models[0] = init_Model(inputs->modeltype,inputs->fargodir,inputs->nout,nx,ny,nz, rank);
         if (rank == 0) printf("Model initialized!\n");
     }
 
@@ -302,10 +303,3 @@ void read_partfile(Inputs *inputs, double *sizes, double *xs, double *ys, double
     }
     fclose(file);
 }
-
-// int run_partrace(char *inputfile) {
-//     char *argv[2];
-//     strcpy(argv[0],"./partrace");
-//     strcpy(argv[1],inputfile);
-//     return main(2,argv);
-// }
