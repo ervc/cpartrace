@@ -59,9 +59,9 @@ int main(int argc, char **argv) {
     fclose(fin);
     
     //TODO: Read these in
-    const size_t nx = NX;
-    const size_t ny = NY;
-    const size_t nz = NZ;
+    // const size_t nx = NX;
+    // const size_t ny = NY;
+    // const size_t nz = NZ;
     
     // make the model
     if (rank==0) printf("making Model...\n");
@@ -70,19 +70,19 @@ int main(int argc, char **argv) {
     else {nlvl = 1;}
     Model *models[nlvl];
     if (inputs->modeltype==JUPITER_MODEL) {
-        size_t nxs[nlvl] = {680, 120, 120, 120, 120};
-        size_t nys[nlvl] = {215, 120, 120, 120, 120};
-        size_t nzs[nlvl] = {20, 34, 62, 86, 86};
+        // size_t nxs[] = {680, 120, 120, 120, 120};
+        // size_t nys[] = {215, 120, 120, 120, 120};
+        // size_t nzs[] = {20, 34, 62, 86, 86};
         for (int i=0; i<NLVL; i++) {
             char leveldir[100];
             sprintf(leveldir,"%s/fargolev%d/",inputs->fargodir,i);
-            models[i] = init_Model(inputs->modeltype,leveldir,"0",nxs[i],nys[i],nzs[i], rank);
+            models[i] = init_Model(inputs->modeltype,leveldir,"0", rank);
         }
         // default model level0
         if (rank == 0) printf("Models initialized\n");
     } else {
         nlvl = 1;
-        models[0] = init_Model(inputs->modeltype,inputs->fargodir,inputs->nout,nx,ny,nz, rank);
+        models[0] = init_Model(inputs->modeltype,inputs->fargodir,inputs->nout, rank);
         if (rank == 0) printf("Model initialized!\n");
     }
 
