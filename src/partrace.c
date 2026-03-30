@@ -12,10 +12,10 @@
 // NX   512
 // NY   256
 // NZ   32
-#define NX 1024
-#define NY 128
-#define NZ 36
-#define NLVL 5
+#define NX 2048
+#define NY 256
+#define NZ 32
+#define NLVL 1
 
 void init_random_particles(Inputs *inputs, double *sizes, double *xs, double *ys, double *zs);
 void read_partfile(Inputs *inputs, double *sizes, double *xs, double *ys, double *zs);
@@ -58,12 +58,13 @@ int main(int argc, char **argv) {
     fprintf_Inputs(fin,inputs);
     fclose(fin);
     
+    //TODO: Read these in
     const size_t nx = NX;
     const size_t ny = NY;
     const size_t nz = NZ;
     
     // make the model
-    printf("making Model...\n");
+    if (rank==0) printf("making Model...\n");
     Model *models[NLVL];
     int nlvl = NLVL;
     if (inputs->modeltype==JUPITER_MODEL) {
@@ -77,11 +78,11 @@ int main(int argc, char **argv) {
             models[i] = init_Model(inputs->modeltype,leveldir,"0",nxs[i],nys[i],nzs[i]);
         }
         // default model level0
-        printf("Models initialized\n");
+        if (rank == 0) printf("Models initialized\n");
     } else {
         nlvl = 1;
         models[0] = init_Model(inputs->modeltype,inputs->fargodir,inputs->nout,nx,ny,nz);
-        printf("Model initialized!\n");
+        if (rank == 0) printf("Model initialized!\n");
     }
 
     // seed the random number generator

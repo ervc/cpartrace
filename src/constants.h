@@ -21,7 +21,7 @@
 #define YR      ( 3.1557600e7 )
 
 // derived constants
-#define R0          ( 50 * AU )
+#define R0          ( 5.2 * AU )
 #define TIME        ( sqrt(R0*R0*R0/G/MSUN) )
 
 // Read in from FARGO or JUPITER output

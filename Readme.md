@@ -6,11 +6,10 @@
 # Description
 C implementation of python partrace model.
 
-Main module in `partrace.c` and `partrace.h`, functions are kept in `src/` file. Make, by default, compiles and runs, can also call `make compile` or `make run` to do separately.
+Main module in `partrace.c` and `partrace.h`, functions are kept in `src/` file. Use `make partrace_mpi` to make parallel implementation. To run, use `mpirun -np 4 ./partrace_mpi path/to/input.in`.
 
 See [Van Clepper et al. 2025](https://iopscience.iop.org/article/10.3847/1538-4357/ada8a4) for model details.
 
-Note: Currently the `velfinding` module is present but still experimental and does not give reliable results. This will be updated in the future
 
 ## TODO:
 
@@ -19,9 +18,13 @@ Note: Currently the `velfinding` module is present but still experimental and do
   - [x] Put the planet mass, location, and sun location in the model
   - [x] Read in from input file
   - [ ] Read HD grid size from file
-  - [ ] read in particles from a file
+  - [x] Read in particles from a file
 
-- [ ] Parallelize main loop using openMP
+- [x] Parallelize main loop using open MPI
+  - [ ] Merge outputs from different ranks into one file automatically
+  - [ ] include separate build for non-parallel version?
+  - [ ] Convert all `printf()` -> `if (rank == 0) printf()`
+  - [ ] Fix error on build for `NLVL != 5`
 
 - [ ] Time dependence
   - [ ] Make meshfields nt,nz,ny,nx?
@@ -52,14 +55,4 @@ Note: Currently the `velfinding` module is present but still experimental and do
 
 ## BUGS:
 
-### Fixed bugs
-- [x] Residence times is not correct because I'm gridding based on centers and not edges
-- [x] Particles mostly diffuse downward?
-  - Needed to flip vz in the integration, veff was still using negative vz
-- [x] Particles seem to spend more time in the negative z side than positive z
-  - [x] I'm sure this has to do with where/when I'm checking for negative z values...
-  -  I was not flipping the particle's velocity in determining the 
-- [x] Theta out of range on particle number 6 in test. x0=y0=5au, z0=1.2au
-  - this was not a bug. Theta really was out of the range of the simulation
-- [x] Particle starts too fast, jumps outward in first year before slowing down
-  - Adjusted initial particle velocity to account for non-zero gas velocity
+Please contact me if you find any bugs in the current implementation!
