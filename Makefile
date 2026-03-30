@@ -31,5 +31,5 @@ positions: gather_positions.c
 all: partrace velocities temperatures positions
 
 clean:
-	rm -rf partrace find_grain_velocities
+	rm -rf partrace find_grain_velocities partrace_mpi
 	rm -rf src/*.so
