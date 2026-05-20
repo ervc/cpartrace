@@ -10,6 +10,22 @@ Main module in `partrace.c` and `partrace.h`, functions are kept in `src/` file.
 
 See [Van Clepper et al. 2025](https://iopscience.iop.org/article/10.3847/1538-4357/ada8a4) for model details.
 
+## Fargo Integration
+
+Partrace is originally designed to read in fargo outputs for the HD mesh.
+Necessary files from FARGO are:
+
+- domain_[x,y,z].dat
+- variables.par
+- planet0.dat*
+- gas[dens, vx, vy, vz]N.dat**
+
+*Current implementation assumes only 1 planet with data saved in
+planet0.dat
+
+**'N' is the output number from fargo. This is usually an int but can also be a
+string, e.g., for averaged outputs.
+
 
 ## TODO:
 
@@ -17,7 +33,7 @@ See [Van Clepper et al. 2025](https://iopscience.iop.org/article/10.3847/1538-43
   - [x] Put alpha, aspect ratio, flaring angle, omegaframe, in the Model struct
   - [x] Put the planet mass, location, and sun location in the model
   - [x] Read in from input file
-  - [ ] Read HD grid size from file
+  - [x] Read HD grid size from file
   - [x] Read in particles from a file
 
 - [x] Parallelize main loop using open MPI
