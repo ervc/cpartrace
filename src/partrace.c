@@ -57,12 +57,7 @@ int main(int argc, char **argv) {
     }
     fprintf_Inputs(fin,inputs);
     fclose(fin);
-    
-    //TODO: Read these in
-    // const size_t nx = NX;
-    // const size_t ny = NY;
-    // const size_t nz = NZ;
-    
+
     // make the model
     if (rank==0) printf("making Model...\n");
     int nlvl = 5;
