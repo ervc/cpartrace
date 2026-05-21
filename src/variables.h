@@ -131,7 +131,7 @@ void read_fargodims(char *fargodir, int *dims) {
     size_t len=0;
     ssize_t read=0;
     while ((read = getline(&line, &len, file)) != -1) {
-        printf("Read line : %s",line);
+        // printf("Read line : %s",line);
         char *split_str;
         split_str = strtok(line, " \t\n");
         char *key;
