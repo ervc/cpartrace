@@ -43,10 +43,10 @@ MeshField *init_MeshField(size_t nx, size_t ny, size_t nz) {
 }
 
 MeshField *init_MeshField_fromFile(
-    char* fname, size_t nx, size_t ny, size_t nz, int rescale) {
+    char* fname, size_t nx, size_t ny, size_t nz, double scale) {
     // Initialize meshfield from a file
     MeshField *mesh = init_MeshField(nx,ny,nz);
-    read_datfile(mesh,fname,rescale);
+    read_datfile(mesh,fname,scale);
     return mesh;
 }
 
@@ -73,7 +73,7 @@ double get_data(MeshField *mesh, size_t k, size_t j, size_t i) {
     return mesh->data[idx];
 }
 
-void read_datfile(MeshField *mesh, char* fname, int rescale) {
+void read_datfile(MeshField *mesh, char* fname, double scale) {
     // init a MeshField struct with data from a file
     // printf("Reading from %s\n",fname);
     int nx=mesh->nx;
@@ -87,21 +87,8 @@ void read_datfile(MeshField *mesh, char* fname, int rescale) {
         printf("Cannot open dat file: %s\n",fname);
         exit(1);
     }
-    // for scaling the data to cgs
-    double scale = 1.0;
-    switch (rescale) {
-        case RHO:
-            scale = MSUN/R0/R0/R0; //g cm-3
-            break;
-        case VPHI:
-        case VR:
-        case VTHETA:
-            scale = R0/TIME;
-            break;
-        default:
-            scale = 1.0;
-            break;
-    }
+    // for scaling the data to cgs use scale var
+    
     size_t idx = 0;
     for (int k=0; k<nz; k++) {
         for (int j=0; j<ny; j++) {

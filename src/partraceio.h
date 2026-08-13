@@ -24,6 +24,8 @@ typedef struct Inputs {
     double dtout;
     double partsize;
     double partdens;
+    double R0;
+    double MSTAR;
     double rmin;
     double rmax;
     double thetamin;
@@ -59,6 +61,8 @@ Inputs *init_Inputs() {
     in->dtout    = 1.0 * YR;
     in->partsize = 1.0; // cm
     in->partdens = PARTDENSITY;
+    in->R0 = 5.2 * AU;
+    in->MSTAR = MSUN;
     in->rmin = 7.0 * AU;
     in->rmax = 12.0 * AU;
     in->thetamin = M_PI_2;
@@ -170,6 +174,10 @@ Inputs *read_inputs(const char* infile) {
             in->partsize = atof(val_s);
         } else if (strcmp(key,"PARTDENS") == 0) {
             in->partdens = atof(val_s);
+        } else if (strcmp(key,"R0") == 0) {
+            in->R0 = atof(val_s);
+        } else if (strcmp(key,"MSTAR") == 0) {
+            in->MSTAR = atof(val_s);
         } else if (strcmp(key,"RMIN") == 0) {
             in->rmin = atof(val_s);
         } else if (strcmp(key,"RMAX") == 0) {
@@ -218,6 +226,8 @@ void fprintf_Inputs(FILE* fout, Inputs *in) {
     fprintf(fout,"  DTOUT     %f\n",in->dtout);
     fprintf(fout,"  PARTSIZE  %f\n",in->partsize);
     fprintf(fout,"  PARTDENS  %f\n",in->partdens);
+    fprintf(fout,"  RO        %f\n",in->R0);
+    fprintf(fout,"  MSTAR     %f\n",in->MSTAR);
     fprintf(fout,"  RMIN      %f\n",in->rmin);
     fprintf(fout,"  RMAX      %f\n",in->rmax);
     fprintf(fout,"  THETAMIN  %f\n",in->thetamin);

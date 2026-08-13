@@ -22,9 +22,9 @@ typedef struct Domain {
     // MeshField* thetaGrid;
 } Domain;
 
-void read_domfile(double* edges, double* centers, size_t nx, char* domfile, int ghostCells, int rescale);
+void read_domfile(double* edges, double* centers, size_t nx, char* domfile, int ghostCells, double scale);
 
-Domain *init_Domain(char* fargodir, size_t nx, size_t ny, size_t nz) {
+Domain *init_Domain(char* fargodir, size_t nx, size_t ny, size_t nz, double R0) {
     Domain *domain = (Domain*)malloc(sizeof(*domain));
     // string copy directory
     snprintf(domain->fargodir,100,"%s",fargodir);
@@ -52,9 +52,9 @@ Domain *init_Domain(char* fargodir, size_t nx, size_t ny, size_t nz) {
     domain->rEdges = (double*)malloc(sizeof(double)*(ny+1));
     domain->thetaEdges = (double*)malloc(sizeof(double)*(nz+1));
 
-    read_domfile(domain->phiEdges,domain->phiCenters,nx,xfile,0,0);
-    read_domfile(domain->rEdges,domain->rCenters,ny,yfile,3,1);
-    read_domfile(domain->thetaEdges,domain->thetaCenters,nz,zfile,3,0);
+    read_domfile(domain->phiEdges,domain->phiCenters,nx,xfile,0,1.0);
+    read_domfile(domain->rEdges,domain->rCenters,ny,yfile,3,R0);
+    read_domfile(domain->thetaEdges,domain->thetaCenters,nz,zfile,3,1.0);
 
     // create_grids(domain);
 
@@ -112,11 +112,11 @@ void free_Domain(Domain *domain) {
     free (domain);
 }
 
-void read_domfile(double *edges, double *centers, size_t nx, char* domfile, int ghostCells, int rescale) {
+void read_domfile(double *edges, double *centers, size_t nx, char* domfile, int ghostCells, double scale) {
     /**
      * Reads the domain file EDGES into an array of CENTER values. 
      * ghostCells is the number of ghost cells to ignore when reading in 
-     * cell edges. rescale is a bool to rescale the value or not.
+     * cell edges. scale is a float to multiply values by.
      * 
      */
     // printf("Reading domain from %s\n",domfile);
@@ -130,11 +130,7 @@ void read_domfile(double *edges, double *centers, size_t nx, char* domfile, int 
     // left and right cell edges
     double ledge = 0.0;
     double redge = 0.0; 
-    // rescale lengths to cm, dont rescale angles though!
-    double scale = 1.0;
-    if (rescale) {
-        scale = R0;
-    }
+    // rescale lengths to cm using "scale", dont rescale angles though!
 
     for (int i=0; i<nx+ghostCells+1; i++) {
         fscanf(file,"%lf",&redge);

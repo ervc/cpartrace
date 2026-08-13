@@ -131,6 +131,7 @@ Model *init_fargo_Model(char* fargodir, char* nout,  int rank) {
         exit(1);
     }
     // make the MeshFields
+    // TODO: Pass proper scale here
     model->gasdens   = init_MeshField_fromFile(rhofile,nx,ny,nz,RHO);
     MeshField *gasvphi   = init_MeshField_fromFile(vphifile,nx,ny,nz,VPHI);
     MeshField *gasvr     = init_MeshField_fromFile(vrfile,nx,ny,nz,VR);
