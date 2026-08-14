@@ -56,25 +56,40 @@ void make_cartvels(Model *model, MeshField *gasvphi, MeshField *gasvr, MeshField
 void init_gradrho(Model *model);
 void get_planetVars(Variables *var, Model *model);
 double get_soundspeed(Model *model, double r);
-Model *init_fargo_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t nz);
-Model *init_Jupiter_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t nz);
-Model *init_RADMC_Model(char* fargodir, char*nout, size_t nx, size_t ny, size_t nz);
+Model *init_fargo_Model(char* fargodir, char* nout,  int rank);
+Model *init_Jupiter_Model(char* fargodir, char* nout,  int rank);
+Model *init_RADMC_Model(char* fargodir, char*nout,  int rank);
 
-Model *init_Model(int which, char* fargodir, char* nout, size_t nx, size_t ny, size_t nz) {
+Model *init_Model(int which, char* fargodir, char* nout,  int rank) {
     switch (which) {
         case FARGO_MODEL:
-            return init_fargo_Model(fargodir, nout, nx, ny, nz);
+            return init_fargo_Model(fargodir, nout,  rank);
         case JUPITER_MODEL:
-            return init_Jupiter_Model(fargodir, nout, nx, ny, nz);
+            return init_Jupiter_Model(fargodir, nout,  rank);
         case RADMC_MODEL:
-            return init_RADMC_Model(fargodir, nout, nx, ny, nz);
+            return init_RADMC_Model(fargodir, nout,  rank);
         default:
             printf("Assuming model input is from Fargo\n");
-            return init_fargo_Model(fargodir, nout, nx, ny, nz);
+            return init_fargo_Model(fargodir, nout,  rank);
     }
 }
 
-Model *init_fargo_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t nz) {
+Variables *read_Fargovars(char* fargodir, char* nout, int rank) {
+    char varfile[100];
+    int cx;
+    cx = snprintf(varfile,100,"%s/variables.par",fargodir);
+    if (cx>100) {
+        perror("Fargodir is too long!");
+        exit(1);
+    }
+    // read in variables
+    if (rank==0) printf("Getting variables...\n");
+    Variables *var = init_Variables_fromFile(varfile);
+
+    return var;
+}
+
+Model *init_fargo_Model(char* fargodir, char* nout,  int rank) {
     // allocate memory
     Model *model = (Model*)malloc(sizeof(*model));
     if (!model) {
@@ -84,7 +99,16 @@ Model *init_fargo_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t
     // string copy the fargo directory
     snprintf(model->fargodir,100,"%s",fargodir);
     // store model params
+    // including fargo model size
     strcpy(model->nout, nout);
+    if (rank==0) printf("Getting variables...\n");
+    Variables *var = read_Fargovars(fargodir, nout, rank);
+    int dims[3];
+    read_fargodims(fargodir, dims);
+    size_t nx = dims[0];
+    size_t ny = dims[1];
+    size_t nz = dims[2];
+
     model->nx = nx;
     model->ny = ny;
     model->nz = nz;
@@ -97,13 +121,11 @@ Model *init_fargo_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t
     char vphifile[100];
     char vrfile[100];
     char vthetafile[100];
-    char varfile[100];
     int cx;
     cx = snprintf(rhofile,100,"%s/gasdens%s.dat",fargodir,nout);
     cx = snprintf(vphifile,100,"%s/gasvx%s.dat",fargodir,nout);
     cx = snprintf(vrfile,100,"%s/gasvy%s.dat",fargodir,nout);
     cx = snprintf(vthetafile,100,"%s/gasvz%s.dat",fargodir,nout);
-    cx = snprintf(varfile,100,"%s/variables.par",fargodir);
     if (cx>100) {
         perror("Fargodir is too long!");
         exit(1);
@@ -117,16 +139,14 @@ Model *init_fargo_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t
     
 
     // get the cartesian gas velocities
-    printf("Making cartvels...\n");
+    if (rank==0) printf("Making cartvels...\n");
     make_cartvels(model, gasvphi, gasvr, gasvtheta);
     
     // make the density gradients in cartesian
-    printf("Getting Gradrho...\n");
+    if (rank==0) printf("Getting Gradrho...\n");
     init_gradrho(model);
 
-    printf("Getting variables...\n");
-    Variables *var = init_Variables_fromFile(varfile);
-    printf("Getting planet variables...\n");
+    if (rank==0) printf("Getting planet variables...\n");
     get_planetVars(var,model);
     // read the variables and rescale where necessary
     model->alpha = get_value(var,"ALPHA");              // unitless
@@ -154,8 +174,10 @@ Model *init_fargo_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t
     model->planetEnvelope = (hillRadius/4. < bondiRadius) ? hillRadius/4 : bondiRadius;
 
 
-    printf("Read in variables: \n");
-    print_variables(var);
+    if (rank==0) {
+        printf("Read in variables: \n");
+        print_variables(var);
+    }
 
     free_Variables(var);
 
@@ -166,7 +188,7 @@ Model *init_fargo_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t
     return model;
 }
 
-Model *init_Jupiter_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t nz) {
+Model *init_Jupiter_Model(char* fargodir, char* nout,  int rank) {
     Model *model = (Model*)malloc(sizeof(*model));
     if (!model) {
         perror("Malloc Failed on Model Creation");
@@ -176,6 +198,16 @@ Model *init_Jupiter_Model(char* fargodir, char* nout, size_t nx, size_t ny, size
     snprintf(model->fargodir,100,"%s",fargodir);
     // store model params
     strcpy(model->nout, nout);
+
+    // for now I don't use these variables but leave here to read in
+    // later in case.
+    // Variables *var = read_Fargovars(model->fargodir, nout, rank);
+    int dims[3];
+    read_fargodims(fargodir, dims);
+    size_t nx = dims[0];
+    size_t ny = dims[1];
+    size_t nz = dims[2];
+
     model->nx = nx;
     model->ny = ny;
     model->nz = nz;
@@ -236,7 +268,7 @@ Model *init_Jupiter_Model(char* fargodir, char* nout, size_t nx, size_t ny, size
     return model;
 }
 
-Model *init_RADMC_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t nz) {
+Model *init_RADMC_Model(char* fargodir, char* nout,  int rank) {
     Model *model = (Model*)malloc(sizeof(*model));
     if (!model) {
         perror("Malloc Failed on Model Creation");
@@ -245,7 +277,16 @@ Model *init_RADMC_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t
     // string copy the fargo directory
     snprintf(model->fargodir,100,"%s",fargodir);
     // store model params
+    // including fargo model size
     strcpy(model->nout, nout);
+    if (rank==0) printf("Getting variables...\n");
+    Variables *var = read_Fargovars(fargodir, nout, rank);
+    int dims[3];
+    read_fargodims(fargodir, dims);
+    size_t nx = dims[0];
+    size_t ny = dims[1];
+    size_t nz = dims[2];
+
     model->nx = nx;
     model->ny = ny;
     model->nz = nz;
@@ -254,13 +295,11 @@ Model *init_RADMC_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t
     char vphifile[100];
     char vrfile[100];
     char vthetafile[100];
-    char varfile[100];
     int cx;
     cx = snprintf(rhofile,100,"%s/gasdens%s.dat",fargodir,nout);
     cx = snprintf(vphifile,100,"%s/gasvx%s.dat",fargodir,nout);
     cx = snprintf(vrfile,100,"%s/gasvy%s.dat",fargodir,nout);
     cx = snprintf(vthetafile,100,"%s/gasvz%s.dat",fargodir,nout);
-    cx = snprintf(varfile,100,"%s/variables.par",fargodir);
     if (cx>100) {
         perror("Fargodir is too long!");
         exit(1);
@@ -277,15 +316,13 @@ Model *init_RADMC_Model(char* fargodir, char* nout, size_t nx, size_t ny, size_t
     model->domain = init_Jupiter_Domain(fargodir,nx,ny,nz);
 
     // get the cartesian gas velocities
-    printf("Making cartvels...\n");
+    if (rank==0) printf("Making cartvels...\n");
     make_cartvels(model, gasvphi, gasvr, gasvtheta);
 
     // get the gradients
     init_gradrho(model);
 
-    printf("Getting variables...\n");
-    Variables *var = init_Variables_fromFile(varfile);
-    printf("Getting planet variables...\n");
+    if (rank==0) printf("Getting planet variables...\n");
     get_planetVars(var,model);
     // read the variables and rescale where necessary
     model->alpha = get_value(var,"ALPHA");               // unitless

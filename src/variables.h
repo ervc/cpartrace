@@ -5,8 +5,6 @@
 #define MAX_VAR_SIZE 100
 // maixmum number of characters in the dictionary
 #define MAX_KEY_SIZE  100
-// number of keys we want to read
-#define NKEYS 4
 
 /**
  * @brief Dictionary object to store variables from the fargo model.
@@ -113,18 +111,22 @@ void print_variables(Variables *var) {
     printf("\n]\n");
 }
 
-Variables *init_Variables_fromFile(char *fname) {
-    Variables *var = init_Variables();
+
+void read_fargodims(char *fargodir, int *dims) {
+    char varfile[100];
+    int cx;
+    cx = snprintf(varfile,100,"%s/variables.par",fargodir);
+    if (cx>100) {
+        perror("Fargodir is too long!");
+        exit(1);
+    }
+    // read the file
     FILE *file;
-    file = fopen(fname, "r");
+    file = fopen(varfile, "r");
     if (file == NULL) {
         perror("Cannot open variables file");
         exit(1);
     }
-    // list of keys that we want to find
-    char *key_search[NKEYS] = {
-        "ALPHA", "ASPECTRATIO", "FLARINGINDEX", "OMEGAFRAME"
-    };
     char* line = NULL;
     size_t len=0;
     ssize_t read=0;
@@ -144,7 +146,53 @@ Variables *init_Variables_fromFile(char *fname) {
             idx++;
             split_str = strtok(NULL," \t\n");
         }
-        for (int i=0; i<NKEYS; i++) {
+        if (strcmp(key, "NX") == 0) {
+            dims[0] = atoi(val_s);
+        }
+        if (strcmp(key, "NY") == 0) {
+            dims[1] = atoi(val_s);
+        }
+        if (strcmp(key, "NZ") == 0) {
+            dims[2] = atoi(val_s);
+        }
+    }
+
+    return;
+}
+
+Variables *init_Variables_fromFile(char *fname) {
+    Variables *var = init_Variables();
+    FILE *file;
+    file = fopen(fname, "r");
+    if (file == NULL) {
+        perror("Cannot open variables file");
+        exit(1);
+    }
+    // list of keys that we want to find
+    char *key_search[] = {
+        "ALPHA", "ASPECTRATIO", "FLARINGINDEX", "OMEGAFRAME"
+    };
+    int nkeys = sizeof(key_search) / sizeof(key_search[0]);
+    char* line = NULL;
+    size_t len=0;
+    ssize_t read=0;
+    while ((read = getline(&line, &len, file)) != -1) {
+        // printf("Read line : %s",line);
+        char *split_str;
+        split_str = strtok(line, " \t\n");
+        char *key;
+        char *val_s;
+        size_t idx = 0;
+        while (split_str != NULL) {
+            if (idx == 0) {
+                key = split_str;
+            } else if (idx == 1) {
+                val_s = split_str;
+            }
+            idx++;
+            split_str = strtok(NULL," \t\n");
+        }
+        for (int i=0; i<nkeys; i++) {
             if (strcmp(key,key_search[i])==0) {
                 add_variable(var,key,atof(val_s));
             }

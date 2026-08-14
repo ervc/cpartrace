@@ -1,11 +1,16 @@
 CXX = g++
 CC = gcc
+MPI_CC ?= mpicc
 CPPFLAGS = -std=c++17
 CCFLAGS = -std=gnu11 -Wall -O3
 
 partrace: src/partrace.c
 	$(CC) $(CCFLAGS) src/partrace.c -o partrace -lm
 	$(CC) $(CCFLAGS) -shared -o src/libpartrace.so -fPIC src/partrace.c
+
+partrace_mpi: src/partrace.c
+	$(MPI_CC) $(CCFLAGS) src/partrace.c -o partrace_mpi -lm
+	$(MPI_CC) $(CCFLAGS) -shared -o src/libpartrace_mpi.so -fPIC src/partrace.c
 
 velocities: src/find_grain_velocities.c
 	$(CC) $(CCFLAGS) src/find_grain_velocities.c -o find_grain_velocities -lm
@@ -26,5 +31,5 @@ positions: gather_positions.c
 all: partrace velocities temperatures positions
 
 clean:
-	rm -rf partrace find_grain_velocities
+	rm -rf partrace find_grain_velocities partrace_mpi
 	rm -rf src/*.so
