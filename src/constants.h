@@ -16,7 +16,7 @@
 // constants (cgs)
 // Change MSUN = MSTAR for now
 // TODO: Read in mstar and r0 from params file
-#define MSUN    ( 1.9891e33 )
+#define MSUN    ( 0.5 * 1.9891e33 )
 #define MEARTH  ( 5.97e27 )
 #define AU      ( 1.49597871e13 )
 #define G       ( 6.674e-8 )
