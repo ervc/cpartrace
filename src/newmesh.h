@@ -1,108 +1,107 @@
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 // #include "constants.h"
 
 typedef struct MeshField {
-    /**
-     * @brief Struct to store and access data in arrays for FARGO outputs
-     * 
-     */
-    size_t nx;
-    size_t ny;
-    size_t nz;
-    double *data;
+  /**
+   * @brief Struct to store and access data in arrays for FARGO outputs
+   *
+   */
+  size_t nx;
+  size_t ny;
+  size_t nz;
+  double *data;
 } MeshField;
 
 // functions
 MeshField *init_MeshField(size_t nx, size_t ny, size_t nz);
-MeshField *init_MeshField_fromFile(char* fname, size_t nx, size_t ny, size_t nz, int rescale);
+MeshField *init_MeshField_fromFile(char *fname, size_t nx, size_t ny, size_t nz,
+                                   double scale);
 size_t get_idx(MeshField *mesh, size_t k, size_t j, size_t i);
-void read_datfile(MeshField *mesh, char* fname, int rescale);
+void read_datfile(MeshField *mesh, char *fname, double scale);
 double get_data(MeshField *mesh, size_t k, size_t j, size_t i);
 void set_data(MeshField *mesh, size_t k, size_t j, size_t i, double value);
 
-
 // definitions
 MeshField *init_MeshField(size_t nx, size_t ny, size_t nz) {
-    // initialize an empty MeshField struct
-    MeshField *mesh = (MeshField*)malloc(sizeof(*mesh));
-    if (!mesh) {
-        perror("Malloc Failed");
-        exit(1);
-    }
-    mesh->nx = nx;
-    mesh->ny = ny;
-    mesh->nz = nz;
-    mesh->data = (double*)malloc(sizeof(double)*nx*ny*nz);
-    if (!mesh->data) {
-        perror("Malloc Failed");
-        exit(1);
-    }
-    return mesh;
+  // initialize an empty MeshField struct
+  MeshField *mesh = (MeshField *)malloc(sizeof(*mesh));
+  if (!mesh) {
+    perror("Malloc Failed");
+    exit(1);
+  }
+  mesh->nx = nx;
+  mesh->ny = ny;
+  mesh->nz = nz;
+  mesh->data = (double *)malloc(sizeof(double) * nx * ny * nz);
+  if (!mesh->data) {
+    perror("Malloc Failed");
+    exit(1);
+  }
+  return mesh;
 }
 
-MeshField *init_MeshField_fromFile(
-    char* fname, size_t nx, size_t ny, size_t nz, double scale) {
-    // Initialize meshfield from a file
-    MeshField *mesh = init_MeshField(nx,ny,nz);
-    read_datfile(mesh,fname,scale);
-    return mesh;
+MeshField *init_MeshField_fromFile(char *fname, size_t nx, size_t ny, size_t nz,
+                                   double scale) {
+  // Initialize meshfield from a file
+  MeshField *mesh = init_MeshField(nx, ny, nz);
+  read_datfile(mesh, fname, scale);
+  return mesh;
 }
 
 void free_MeshField(MeshField *mesh) {
-    // Free the memory for the meshfield
-    free(mesh->data);
-    free(mesh);
+  // Free the memory for the meshfield
+  free(mesh->data);
+  free(mesh);
 }
 
 // If you want to modify the struct, pass a pointer. If you just want to
 // read from the struct, pass the object
 
 size_t get_idx(MeshField *mesh, size_t k, size_t j, size_t i) {
-    return k*mesh->nx*mesh->ny + j*mesh->nx + i;
+  return k * mesh->nx * mesh->ny + j * mesh->nx + i;
 }
 
 void set_data(MeshField *mesh, size_t k, size_t j, size_t i, double value) {
-    size_t idx = get_idx(mesh,k,j,i);
-    mesh->data[idx] = value;
+  size_t idx = get_idx(mesh, k, j, i);
+  mesh->data[idx] = value;
 }
 
 double get_data(MeshField *mesh, size_t k, size_t j, size_t i) {
-    size_t idx = get_idx(mesh,k,j,i);
-    return mesh->data[idx];
+  size_t idx = get_idx(mesh, k, j, i);
+  return mesh->data[idx];
 }
 
-void read_datfile(MeshField *mesh, char* fname, double scale) {
-    // init a MeshField struct with data from a file
-    // printf("Reading from %s\n",fname);
-    int nx=mesh->nx;
-    int ny=mesh->ny;
-    int nz=mesh->nz;
-    // read the data in
-    // fargo data is stored as sequence of 8 byte doubles
-    FILE* file;
-    file = fopen(fname,"rb");
-    if (file == NULL) {
-        printf("Cannot open dat file: %s\n",fname);
-        exit(1);
+void read_datfile(MeshField *mesh, char *fname, double scale) {
+  // init a MeshField struct with data from a file
+  // printf("Reading from %s\n",fname);
+  int nx = mesh->nx;
+  int ny = mesh->ny;
+  int nz = mesh->nz;
+  // read the data in
+  // fargo data is stored as sequence of 8 byte doubles
+  FILE *file;
+  file = fopen(fname, "rb");
+  if (file == NULL) {
+    printf("Cannot open dat file: %s\n", fname);
+    exit(1);
+  }
+  // for scaling the data to cgs use scale var
+
+  size_t idx = 0;
+  for (int k = 0; k < nz; k++) {
+    for (int j = 0; j < ny; j++) {
+      for (int i = 0; i < nx; i++) {
+        char buffer[8];
+        fread(buffer, 8, 1, file);
+        double value = *((double *)buffer);
+        // rescale the data here to cgs
+        mesh->data[idx] = value * scale;
+        idx++;
+        // set_data(mesh,k,j,i,value*scale);
+      }
     }
-    // for scaling the data to cgs use scale var
-    
-    size_t idx = 0;
-    for (int k=0; k<nz; k++) {
-        for (int j=0; j<ny; j++) {
-            for (int i=0; i<nx; i++) {
-                char buffer[8];
-                fread (buffer,8,1,file);
-                double value = *((double*)buffer);
-                // rescale the data here to cgs
-                mesh->data[idx] = value*scale;
-                idx++;
-                // set_data(mesh,k,j,i,value*scale);
-                }
-            }
-        }
-    fclose(file);
+  }
+  fclose(file);
 }
-
