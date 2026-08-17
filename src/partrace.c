@@ -82,7 +82,8 @@ int main(int argc, char **argv) {
     }
 
     // seed the random number generator
-    srand(time(NULL));
+    // make sure seed is different on different ranks!
+    srand(time(NULL) * (rank+1));
 
     int np = inputs->nparts;
     double *sizes = malloc(np * sizeof(double));
