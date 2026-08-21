@@ -28,7 +28,9 @@ int main(int argc, char **argv) {
 
     if (rank == 0) {
         printf("*** CPARTRACE VERSION %s ***\n", VERSION);
+        printf("Parallel implementation. Running on %d procs\n", nprocs);
     }
+    printf("  Rank %d / %d running\n", rank, nprocs);
 
     // read inputs
     char infile[100];
@@ -60,7 +62,7 @@ int main(int argc, char **argv) {
 
     // make the model
     if (rank==0) printf("making Model...\n");
-    int nlvl = 5;
+    int nlvl = 1;
     if (inputs->modeltype==JUPITER_MODEL) {nlvl = 5;}
     else {nlvl = 1;}
     Model *models[nlvl];
