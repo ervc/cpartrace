@@ -31,6 +31,7 @@ int main(int argc, char **argv) {
         printf("Parallel implementation. Running on %d procs\n", nprocs);
     }
     printf("  Rank %d / %d running\n", rank, nprocs);
+    fflush(stdout);
 
     // read inputs
     char infile[100];
@@ -49,16 +50,19 @@ int main(int argc, char **argv) {
     }
     MPI_Barrier(MPI_COMM_WORLD);
 
-    FILE *fin;
-    char inputout[100];
-    sprintf(inputout,"%s/inputs.in",inputs->outputdir);
-    fin = fopen(inputout,"w");
-    if (fin==NULL) {
-        fprintf(stderr,"Cannot create input file in output directory!");
-        exit(1);
+    if (rank == 0) {
+        FILE *fin;
+        char inputout[100];
+        sprintf(inputout,"%s/inputs.in",inputs->outputdir);
+        fin = fopen(inputout,"w");
+        if (fin==NULL) {
+            fprintf(stderr,"Cannot create input file in output directory!");
+            MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
+        }
+        fprintf_Inputs(fin,inputs);
+        fclose(fin);
     }
-    fprintf_Inputs(fin,inputs);
-    fclose(fin);
+    MPI_Barrier(MPI_COMM_WORLD);
 
     // make the model
     if (rank==0) printf("making Model...\n");
