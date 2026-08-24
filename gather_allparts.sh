@@ -5,11 +5,11 @@ Usage: $0 outputdir
 "
 
 if [[ "$#" -ne 1 ]]; then
-    echo $__usage
+    echo "$__usage"
     exit 1
 fi
 if [[ "#1" == "-h" ]]; then
-    echo $__usage
+    echo "$__usage"
     exit 0
 fi
 
