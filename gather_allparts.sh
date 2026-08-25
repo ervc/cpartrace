@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-__usage="
-Read allparts_rank* files and create one compiled allparts.txt
-Usage: $0 outputdir
+__usage="Read allparts_rank* files and create one compiled allparts.txt
+Usage: $0 outputdir [dir2 dir3 ... dirN]
 "
 
-if [[ "$#" -ne 1 ]]; then
+if [[ "$#" -eq 0 ]]; then
     echo "$__usage"
     exit 1
 fi
@@ -13,7 +12,24 @@ if [[ "#1" == "-h" ]]; then
     exit 0
 fi
 
-# list allparts from directory
-OUTDIR="$1"
-LASTRANK=$(find "$OUTDIR"/allparts_rank*.txt | xargs -- basename -a | sed s/[^0-9]//g | sort -n | tail -1)
-echo $LASTRANK
+gather_files () {
+    # list allparts from directory
+    OUTDIR="$1"
+    echo "----------------------------------------"
+    echo "Working on $OUTDIR"
+    OUTFILE="$OUTDIR"/allparts.txt
+    echo "t x y z vx vy vz status" > "$OUTFILE"
+    # Note that order is NOT preserved here but that does not matter
+    FILES=$(find "$OUTDIR"/allparts_rank*.txt)
+    for f in ${FILES[@]}; do
+        # trim first line from file
+        tail -n +2 "$f" >> "$OUTFILE"
+        rm $f
+    done
+    echo "Saved to $OUTFILE"
+    echo "----------------------------------------"
+}
+
+for DIR in "$@"; do
+    gather_files "$DIR"
+done

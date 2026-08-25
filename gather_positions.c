@@ -117,7 +117,7 @@ int main(int argc, char **argv) {
         fputs("OUTPUT DIRECTORY TOO LONG!\n", stdout);
         return 1;
     }
-    int npart = 1000;
+    int npart = 100;
 
     char infile[100];
     jsn = snprintf(infile, sizeof(infile), "%s/inputs.in", outdir);
@@ -140,13 +140,13 @@ int main(int argc, char **argv) {
     int nline;
     fprintf(stdout, "Interpolating [%d] particles from output dir: %s\n", npart, outdir);
     for (int n=0; n<npart; n++) {
-        jsn = snprintf(partfile, sizeof(partfile), "%s/particle%d.txt", outdir, n);
+        jsn = snprintf(partfile, sizeof(partfile), "%s/particle%d.txt", outdir, n*10);
         if (jsn>=sizeof(partfile)) {
             fputs("PARTICLE FILE NAME TOO LONG\n", stdout);
         }
         FILE *file = fopen(partfile, "r");
         if (file == NULL) {
-            printf("Problem opening file: %s", partfile);
+            printf("Problem opening file: %s\n", partfile);
             return 1;
         }
         nline = 0;
